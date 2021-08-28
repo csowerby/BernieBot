@@ -20,6 +20,8 @@ BitBoard pawnCaptures[64][2] = {0};
 uint64_t zobristTable[64][12] = {0};
 
 const char *chessPieces[13] = {"\u2659","\u2658","\u2657","\u2656"," \u2655","\u2654","\u265F","\u265E","\u265D","\u265C","\u265B","\u265A", " "};
+
+
 /* --------- DEFAULT METHODS --------------- */
 
 const char* square_num_to_coords(char *str, int num){

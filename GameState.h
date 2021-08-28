@@ -43,8 +43,10 @@ typedef struct{
     
     uint8_t castlingPrivileges;
     
-    // En passant privileges square [0, 64] (64 = no_sqr) if no castling is possible
+    // En passant target square [0, 64] (64 = no_sqr) if no enPassant is possible
     Square enPassantTarget;
+    
+    // Number of halfmoves since
     uint16_t fiftyMovePly;
     bool whiteToMove;
     
@@ -57,8 +59,11 @@ typedef struct{
 /* --------------- GameState Methods ------------- */
 void init_GameState(GameState *gs, char *fen);
 int updateGameState(GameState *gs, Move*move);
-int rotateBitBoard(BitBoard *oldBoard, BitBoard *newBoard, int degree);
 
+// Rotation Methods
+int rotateBitBoard(BitBoard *oldBoard, BitBoard *newBoard);
+int diagBitBoard(BitBoard *oldBoard, BitBoard *newBoard);
+int adiagBitBoard(BitBoard *oldBoard, BitBoard *newBoard);
 
 
 

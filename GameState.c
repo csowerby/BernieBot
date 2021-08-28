@@ -53,6 +53,8 @@ void init_GameState(GameState *gs, char *fen){
     }
     gs-> castlingPrivileges = 0;
     gs-> enPassantTarget = no_sqr;
+    gs-> fiftyMovePly = 0;
+    gs-> plyNum = 0;
     gs-> posKey = 0ULL;
     
     // Initialize GameState from FEN
@@ -112,8 +114,18 @@ void init_GameState(GameState *gs, char *fen){
             setBit(&gs->boards[4], square_num);
             file++;
         }
-        
     }
+    // ROTATE BITBOARDS:
+
+    for(int i = 0; i < NUM_BOARDS; i++){
+        rotateBitBoard(&gs->boards[i], &gs->rot_boards[i]);
+        diagBitBoard(&gs->boards[i], &gs->diag_boards[i]);
+        adiagBitBoard(&gs->boards[i], &gs->adiag_boards[i]);
+    }
+     
+     
+     
+
     // WHO IS ON MOVE:
     i++;
     //printf("Character Registered! %c\n", fen[i]);
@@ -127,7 +139,7 @@ void init_GameState(GameState *gs, char *fen){
     }
     i = i +2;
     //CASTLING RIGHTS
-    for (i; fen[i] != ' '; i++){
+    for (; fen[i] != ' '; i++){
         //printf("Character Registered! %c\n", fen[i]);
         switch (fen[i]) {
             case 'K':
@@ -154,8 +166,9 @@ void init_GameState(GameState *gs, char *fen){
     // En Passant Target .
     int rank_num = -1;
     char file_char = -1;
-    for(i; fen[i] != ' '; i++){
+    for(; fen[i] != ' '; i++){
         if (fen[i] == '-'){
+            i++;
             break;
         }else if(isdigit(fen[i])){
             rank_num = fen[i] - '0';
@@ -163,29 +176,124 @@ void init_GameState(GameState *gs, char *fen){
             file_char = fen[i];
         }
     }
-    gs-> enPassantTarget = square_coords_to_num(rank_num, file_char);
+    if (rank_num == -1 && file_char == -1){
+        gs->enPassantTarget = no_sqr;
+    }else{
+        gs-> enPassantTarget = square_coords_to_num(rank_num, file_char);
+    }
     i++;
      
     // Update the 50 move ply rule
-    for(i; fen[i] != ' '; i++){
-        //printf("Character Registered! %c\n", fen[i]);
+    
+    
+    for(; fen[i] != ' '; i++){
+        printf("50 Move Ply Character Registered! %c\n", fen[i]);
+        gs-> fiftyMovePly = 10 * gs->fiftyMovePly + (fen[i] - '0');
     }
     i++;
     // Update the gamemove number
-    for(i; fen[i] != ' '; i++){
-        //printf("Character Registered! %c\n", fen[i]);
+    int gameMove = 0;
+    for(; fen[i] != '\0'; i++){
+        printf("GameMove Num Character Registered! %c\n", fen[i]);
+        gameMove = 10 * gameMove + (fen[i] - '0');
     }
-    
+    int ply = (gameMove-1) * 2;
+    if (!gs->whiteToMove){
+        ply++;
+    }
+    gs->plyNum = ply;
 }
 
 
 
+/* -------------- BITBOARD ROTATIONS --------------*/
 
 
-
-int rotatedBitBoard(BitBoard *oldBoard, BitBoard *newBoard){
-    // TODO: DO this
+int rotateBitBoard(BitBoard *oldBoard, BitBoard *newBoard){
+    for (int rank = 0; rank < 8; rank++){
+        for(int file = 0; file < 8; file++){
+            if (getBit(oldBoard, 8*rank + file)){
+                setBit(newBoard, 8*file + rank);
+            }else{
+                clearBit(newBoard, 8 * file + rank);
+            }
+        }
+    }
     
+    return 0;
+}
+
+int diagBitBoard(BitBoard *oldBoard, BitBoard *newBoard){
+    for (int i = 0; i < 64; i++) {
+        if (getBit(oldBoard, i)){
+            setBit(newBoard, norm_to_diag[i]);
+        }else{
+            clearBit(newBoard, norm_to_diag[i]);
+        }
+    }
+    return 0;
+}
+
+
+
+int adiagBitBoard(BitBoard *oldBoard, BitBoard *newBoard){
+    // ADiagonal from a8-h1
+    /*
+    printf("Rotating BitBoard - ANTI DIAGONAL \n\n");
+    printf("OLD BOARD: \n");
+    printBitBoard(oldBoard, 0);
+    printf("NEW BOARD: \n");
+    int diag_sq = 56;
+    // TOP HALF
+    for(int i = 1; i <= 8; i++ ){
+        for (int j = 0; j < i; j++){
+            if(getBit(oldBoard, 8 * (8 - i + j) + j)){
+                setBit(newBoard, diag_sq);
+                printf("1 ");
+            }else{
+                clearBit(newBoard, diag_sq);
+                printf("0 ");
+            }
+            // Increment square counter
+            if (diag_sq % 8 == 7){
+                diag_sq -= 15;
+                printf("\n");
+            }else{
+                diag_sq++;
+            }
+        }
+    }
+    for(int i = 1; i < 8; i++){
+        for (int j = 0; j < 8-i; j++){
+            if(getBit(oldBoard, 8 * j + i + j)){
+                setBit(newBoard, diag_sq);
+                printf("1 ");
+            }else{
+                clearBit(newBoard, diag_sq);
+                 printf("0 ");
+            }
+            
+            // Increment square counter
+            if (diag_sq % 8 == 7){
+                diag_sq -= 15;
+                printf("\n");
+            }else{
+                diag_sq++;
+            }
+        }
+    }
+    printf("\n");
+    
+    printBitBoard(newBoard, 0);
+    */
+    for (int i = 0; i < 64; i++) {
+        if (getBit(oldBoard, i)){
+            setBit(newBoard, norm_to_adiag[i]);
+        }else{
+            clearBit(newBoard, norm_to_adiag[i]);
+        }
+    }
+    return 0;
     return 0;
 }
 
@@ -199,13 +307,18 @@ int updateGameState(GameState *gs, Move *move){
 
 
 /* ------------------- METHODS FOR PRINTING GAMESTATE --------------- */
-
 void printGameStateInfo(GameState *gs){
     // BitBoards
     printf("\n -- GAMESTATE INFO -- \n\n");
     printf("BitBoards: (wPawns, bPawns, wPieces, bPieces, aPieces)...\n");
-    for (int i = 0; i < 5; i++){
+    for (int i = 0; i < NUM_BOARDS; i++){
         printBitBoard(gs->boards, i);
+    }
+    printf("Rotated Board: rot, diag, aDiag:\n");
+    for (int i = 0; i < NUM_BOARDS; i++){
+        printBitBoard(gs->rot_boards, i);
+        printBitBoard(gs->diag_boards, i);
+        printBitBoard(gs->adiag_boards, i);
     }
     
     // Piece Info/Locations
@@ -222,7 +335,7 @@ void printGameStateInfo(GameState *gs){
         printf("\n");
     }
     printf("\n");
-    printf("Move: %i, Ply: %i\n", gs->plyNum/2, gs->plyNum);
+    printf("Move: %i, Ply: %i\n", gs->plyNum/2 + 1, gs->plyNum);
     printf("White To Move?: %i\n", gs->whiteToMove);
     printf("Castling (KQkq): %i%i%i%i\n", getBit(&gs->castlingPrivileges, 3), getBit(&gs->castlingPrivileges, 2), getBit(&gs->castlingPrivileges, 1), getBit(&gs->castlingPrivileges, 0));
     printf("Fifty Move Ply Counter: %i\n", gs->fiftyMovePly);
@@ -237,7 +350,7 @@ void printGameBoard(GameState *gs){
     // CALCULATE PIECE CHARACTER STRING
     char pieces[64];
     for (int i = 0; i < 64; i++){
-        pieces[i] = '.';
+        pieces[i] = ' ';
     }
     for (int i = 0; i < 12; i++){
         for (int j = 0; j < 10; j++)
