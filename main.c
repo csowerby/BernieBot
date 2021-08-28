@@ -9,7 +9,6 @@
 
 #include "defs.h"
 #include "GameState.h"
-#include "gui.h"
 #include "engine.h"
 
 void moveInput(void){

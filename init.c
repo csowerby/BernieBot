@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include "defs.h"
 #include "GameState.h"
-#include "gui.h"
+
 
 /*--------- GLOBAL VARIABLES INITIALIZATION -------- */
 
