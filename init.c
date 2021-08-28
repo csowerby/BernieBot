@@ -11,7 +11,7 @@
 #include "GameState.h"
 #include "gui.h"
 
-/*------------ GLOBAL VARIABLES ------------ */
+/*--------- GLOBAL VARIABLES INITIALIZATION -------- */
 
 BitBoard knightMoves[64] = {0};
 BitBoard kingMoves[64] = {0};
@@ -20,10 +20,132 @@ BitBoard pawnCaptures[64][2] = {0};
 uint64_t zobristTable[64][12] = {0};
 
 const char *chessPieces[13] = {"\u2659","\u2658","\u2657","\u2656"," \u2655","\u2654","\u265F","\u265E","\u265D","\u265C","\u265B","\u265A", " "};
+/* --------- DEFAULT METHODS --------------- */
 
+const char* square_num_to_coords(char *str, int num){
+    int rank = num / 8;
+    int file = num % 8;
+    
+    str[0] = 'a' + file;
+    str[1] = '1' + rank;
+
+    return str;
+}
+
+int square_coords_to_num(int rank, char file){
+    return 8 * rank + (file - 'a');
+}
+
+char pieceNumToChar(int num){
+    /* Function that returns the piece symbol given the index of bitboard
+     i.e. bitboard 0 -> white pawns
+          bitboard 3 -> black knight
+     
+     order is Pawns, Knights, Bishops, Rooks, Queens, Kings (white then black)
+     */
+    char p = '\0';
+    switch (num) {
+        case 0:
+            // White Pawn
+            p = 'P';
+            break;
+        case 1:
+            // White Knight
+            p = 'N';
+            break;
+        case 2:
+            // White Bishop
+            p = 'B';
+            break;
+        case 3:
+            // White Rook
+            p = 'R';
+            break;
+        case 4:
+            // White Queen
+            p = 'Q';
+            break;
+        case 5:
+            // White King
+            p = 'K';
+            break;
+        case 6:
+            // Black Pawn
+            p = 'p';
+            break;
+        case 7:
+            // Black Knight
+            p = 'k';
+            break;
+        case 8:
+            // Black Bishop
+            p = 'b';
+            break;
+        case 9:
+            // Black Rook
+            p = 'r';
+            break;
+        case 10:
+            // Black Queen
+            p = 'q';
+            break;
+        case 11:
+            // Black King
+            p = 'k';
+            break;
+    }
+    return p;
+}
+
+
+int fenCharToNum(char fChar){
+    /* Takes character in FEN string and converts to piece number */
+    switch (fChar) {
+        case 'P':
+            return 0;
+            break;
+        case 'N':
+            return 1;
+            break;
+        case 'B':
+            return 2;
+            break;
+        case 'R':
+            return 3;
+            break;
+        case 'Q':
+            return 4;
+            break;
+        case 'K':
+            return 5;
+            break;
+        case 'p':
+            return 6;
+            break;
+        case 'n':
+            return 7;
+            break;
+        case 'b':
+            return 8;
+            break;
+        case 'r':
+            return 9;
+            break;
+        case 'q':
+            return 10;
+            break;
+        case 'k':
+            return 11;
+            break;
+        default:
+            assert(false);
+            return -1;
+            break;
+    }
+}
 /* ------------- INITIALIZATION METHODS -------------*/
 
-BitBoard* preCalcKnightMoves(BitBoard knightMoves[64]){
+void preCalcKnightMoves(BitBoard knightMoves[64]){
     for (int i = 0; i < 64; i++){
         int rank = i / 8;
         int file = i % 8;
@@ -53,10 +175,9 @@ BitBoard* preCalcKnightMoves(BitBoard knightMoves[64]){
             setBit((knightMoves + i), i - 15);
         }
     }
-    return knightMoves;
 }
 
-BitBoard* preCalcKingMoves(BitBoard kingMoves[64]){
+void preCalcKingMoves(BitBoard kingMoves[64]){
     for (int i = 0; i < 64; i++){
         int rank = i / 8;
         int file = i % 8;
@@ -118,8 +239,6 @@ BitBoard* preCalcKingMoves(BitBoard kingMoves[64]){
             }
         }
     }
-    
-    return kingMoves;
 }
 
 
@@ -191,7 +310,6 @@ void initZobrist(uint64_t zobristTable[64][12] ){
 /* INITIALIZATION REQUIRED FOR PLAYING A GAME */
 void init(){
     printf("Initializing Game...\n");
-
     
     printf("Precalculating Knight Move Tables...\n");
     preCalcKnightMoves(knightMoves);

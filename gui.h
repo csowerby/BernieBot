@@ -23,7 +23,7 @@ char pieceNumToChar(int num);
 //void fenToBitBoard(char fen[]);
 void printBitBoard(BitBoard* bBoard, int nBitBoard);
 const char* square_num_to_coords(char *str, int num);
-int fenCharToNum(char fChar);
+
 int square_coords_to_num(int rank, char file);
 void printGameBoard(GameState *gs);
 #endif /* gui_h */

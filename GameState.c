@@ -7,16 +7,9 @@
 //
 
 #include "GameState.h"
-#include "gui.h"
 
 
-
-//MARK: BITBOARD METHODS
-/* ------------------------------------------------ */
-/* ------------------------------------------------ */
-/* ------------------------------------------------ */
-
-
+/* ------------ BITBOARD METHODS -------------- */
 
 void setBit(BitBoard *board, int bitPos){
     uint64_t flag = 1;
@@ -37,10 +30,13 @@ bool getBit(BitBoard *board, int bitPos){
     }
 }
 
+uint8_t get_ls1b_pos(BitBoard *board){
+    // Using the deBruijin algorithm
+    // http://supertech.csail.mit.edu/papers/debruijn.pdf
+    return (uint8_t) DeBruijnBitPosition[((uint64_t)((*board & -(*board)) * debrujin64)) >> 58];
+}
 
-
-/* ------- GAMESTATE METHODS --------- */
-
+/* ------- GAMESTATE INITIALIZATION --------- */
 void init_GameState(GameState *gs, char *fen){
     // Fill arrays with zero
     for (int i = 0; i < NUM_BOARDS; i++){
@@ -66,8 +62,6 @@ void init_GameState(GameState *gs, char *fen){
     }else{
         printf("Initializing with FEN Inputted: %s\n", fen);
     }
-    
-    //printGameStateInfo(gs);
     
     // PARSING FEN
     int i;
@@ -120,7 +114,6 @@ void init_GameState(GameState *gs, char *fen){
         }
         
     }
-    //printGameStateInfo(gs);
     // WHO IS ON MOVE:
     i++;
     //printf("Character Registered! %c\n", fen[i]);
@@ -133,11 +126,7 @@ void init_GameState(GameState *gs, char *fen){
         // Only two legal characters here
     }
     i = i +2;
-    
-    
-    
     //CASTLING RIGHTS
-    
     for (i; fen[i] != ' '; i++){
         //printf("Character Registered! %c\n", fen[i]);
         switch (fen[i]) {
@@ -162,11 +151,10 @@ void init_GameState(GameState *gs, char *fen){
         }
     }
     i++;
-    // En Passant Target Ability.
+    // En Passant Target .
     int rank_num = -1;
     char file_char = -1;
     for(i; fen[i] != ' '; i++){
-        //printf("Character Registered! %c\n", fen[i]);
         if (fen[i] == '-'){
             break;
         }else if(isdigit(fen[i])){
@@ -190,6 +178,27 @@ void init_GameState(GameState *gs, char *fen){
     
 }
 
+
+
+
+
+
+int rotatedBitBoard(BitBoard *oldBoard, BitBoard *newBoard){
+    // TODO: DO this
+    
+    return 0;
+}
+
+
+int updateGameState(GameState *gs, Move *move){
+    // TODO: DO THIS
+    
+    return 0;
+}
+
+
+
+/* ------------------- METHODS FOR PRINTING GAMESTATE --------------- */
 
 void printGameStateInfo(GameState *gs){
     // BitBoards
@@ -217,26 +226,46 @@ void printGameStateInfo(GameState *gs){
     printf("White To Move?: %i\n", gs->whiteToMove);
     printf("Castling (KQkq): %i%i%i%i\n", getBit(&gs->castlingPrivileges, 3), getBit(&gs->castlingPrivileges, 2), getBit(&gs->castlingPrivileges, 1), getBit(&gs->castlingPrivileges, 0));
     printf("Fifty Move Ply Counter: %i\n", gs->fiftyMovePly);
-    
     printf("\nGame board:\n");
     printGameBoard(gs);
 }
 
-uint8_t get_ls1b_pos(BitBoard *board){
-    // Using the deBruijin algorithm
-    // http://supertech.csail.mit.edu/papers/debruijn.pdf
-    return (uint8_t) DeBruijnBitPosition[((uint64_t)((*board & -(*board)) * debrujin64)) >> 58];
-}
+void printGameBoard(GameState *gs){
 
-int rotatedBitBoard(BitBoard *oldBoard, BitBoard *newBoard){
-    // TODO: DO this
+    char top_bot_string[] = "+---+---+---+---+---+---+---+---+\n";
     
-    return 0;
+    // CALCULATE PIECE CHARACTER STRING
+    char pieces[64];
+    for (int i = 0; i < 64; i++){
+        pieces[i] = '.';
+    }
+    for (int i = 0; i < 12; i++){
+        for (int j = 0; j < 10; j++)
+            if (gs->pceList[i][j] == 64){
+                break;
+            }else{
+                pieces[gs->pceList[i][j]] = pieceNumToChar(i);
+            }
+    }
+    // PUT PIECES INTO THE BOARD AND PRINT IT:
+    for(int rank = 7; rank >= 0; rank--){
+        printf("%s", top_bot_string);
+        for(int file = 0; file < 8; file++){
+            printf("| %c ", pieces[8 * rank + file]);
+        }
+        printf("|\n");
+    }
+    printf("%s", top_bot_string);
 }
 
-
-int updateGameState(GameState *gs, Move *move){
-    // TODO: DO THIS
-    
-    return 0;
+void printBitBoard(BitBoard* bBoard, int nBitBoard){
+    // Print out bitboard in array bBoard with index nBitBoard.
+    for (int rank = 7; rank >= 0; rank--){
+        for (int file = 0; file < 8; file ++){
+            printf("%i ", getBit((bBoard + nBitBoard), 8 * rank + file));
+        }
+        printf("\n");
+    }
+    printf("\n");
 }
+

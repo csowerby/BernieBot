@@ -23,6 +23,9 @@ void moveInput(void){
 /*
  
  TODO: -
+ * FINISH THE INIT GAMESTATE METHOD
+    * 50 MOVE PLY RULE
+    * gamemove number
  * UNLINK ALL THE HEADERFILES
     * get rid of gui.c and gui.h
     * Move default functions to init

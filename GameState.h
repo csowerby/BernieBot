@@ -20,21 +20,11 @@
 void setBit(BitBoard *board, int bitPos);
 void clearBit(BitBoard *board, int bitPos);
 bool getBit(BitBoard *board, int bitPos);
+uint8_t get_ls1b_pos(BitBoard *board);
 
 
 
-/* Structs*/
-
-//struct GameHistory;
-//struct GameState;
-
-
-/* ------------------------------ */
-typedef struct GameHistory{
-        
-}GameHistory;
-
-/* -------------GAMESTATE----------------- */
+/* ----------- GAMESTATE STRUCT --------------- */
 typedef struct{
     
     BitBoard boards[NUM_BOARDS]; // wP, bP, wPce, bPce, aPce
@@ -66,8 +56,17 @@ typedef struct{
 
 /* --------------- GameState Methods ------------- */
 void init_GameState(GameState *gs, char *fen);
+int updateGameState(GameState *gs, Move*move);
+int rotateBitBoard(BitBoard *oldBoard, BitBoard *newBoard, int degree);
+
+
+
+
+/* ------ METHODS FOR PRINTING GAMESTATE -------*/
 void printGameStateInfo(GameState *gs);
-uint8_t get_ls1b_pos(BitBoard *board);
+void printGameBoard(GameState *gs);
+void printBitBoard(BitBoard *bBoard, int nBitBoard);
+
 
 
 

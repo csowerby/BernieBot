@@ -14,10 +14,6 @@
 #include "GameState.h"
 
 int badEvaluation(GameState *gs);
-
-Move encodeMove(Square startSq, Square endSq);
-
-int decodeMove(Move move);
 int moveGen(Move *moveList, GameState *gs); 
 
 #endif /* engine_h */

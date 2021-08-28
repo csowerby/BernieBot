@@ -20,13 +20,10 @@
 
 #include <assert.h>
 
+/* ------ DEFINITIONS ----------*/
 
-// Number of bitboards in the data structure
 #define NUM_BOARDS 5 // -> Represents White Pawns, Black Pawns, All Pawns?, White Pieces, Black Pieces, All Pieces
-#define NUM_PIECES 12 // -> 6 pieces for each side and noPce represents no piece exists
 
-//printf("brinning of print statement %" PRIu64 " end of print\n", bBoard);
-#define bb "%" PRIu64 "\n"
 
 /* ----- deBrujin lookup stuff ------- */
 #define debrujin64 0x022fdd63cc95386dULL
@@ -35,6 +32,7 @@ static const uint8_t DeBruijnBitPosition[64] = {0,
     62,  5, 39, 46, 44, 42, 22,  9, 24, 35, 59, 56, 49, 18, 29, 11,
     63, 52,  6, 26, 37, 40, 33, 47, 61, 45, 43, 21, 23, 58, 17, 10,
     51, 25, 36, 32, 60, 20, 57, 16, 50, 31, 19, 15, 30, 14, 13, 12};
+/* ------------- ENUMS ------------------*/
 
 // SQUARES
 enum {a1, b1, c1, d1, e1, f1, g1, h1,
@@ -47,31 +45,18 @@ enum {a1, b1, c1, d1, e1, f1, g1, h1,
       a8, b8, c8, d8, e8, f8, g8, h8, no_sqr
 };
 
-
-
 //Pieces
 enum {wP, wN, wB, wR, wQ, wK, bP, bN, bB, bR, bQ, bK, no_pce};
 
-extern const char *chessPieces[13];
 // Castling
-
 enum {w_short_castle = 8, w_long_castle=4, b_short_castle=2, b_long_castle=1};
 
 
 
-/* ------ DECLARATIONS METHODS --------*/
+/* ------ DECLARATIONS --------*/
 typedef uint64_t BitBoard;
 typedef uint16_t Move;
 typedef uint8_t Square; 
-
-/* ----------- INIT METHODS ------- */
-
-void init(void);
-
-BitBoard* preCalcKnightMoves(BitBoard knightMoves[64]);
-BitBoard* preCalcKingMoves(BitBoard kingMoves[64]);
-void preCalcSlidingMoves(BitBoard rankMoves[64][256]);
-void initZobrist(uint64_t zobrist_table[64][12] );
 
 /* ---------- GLOBAL VARIABLES --------- */
 extern BitBoard knightMoves[64];
@@ -80,6 +65,26 @@ extern BitBoard slidingMoves[64][256];
 extern uint64_t zobristTable[64][12];
 extern BitBoard pawnCaptures[64][2];
 extern const char *chessPieces[13];
+
+
+/* ------------ DEFAULT METHODS --------*/
+const char* square_num_to_coords(char *str, int num);
+int square_coords_to_num(int rank, char file);
+char pieceNumToChar(int num);
+int fenCharToNum(char fChar);
+
+/* ----------- INITIALIZATION METHODS ------- */
+
+
+void preCalcKnightMoves(BitBoard knightMoves[64]);
+void preCalcKingMoves(BitBoard kingMoves[64]);
+void preCalcSlidingMoves(BitBoard rankMoves[64][256]);
+void preCalcPawnCaptures(BitBoard pawnCaptures[64][2]);
+void initZobrist(uint64_t zobrist_table[64][12] );
+
+void init(void);
+
+
 
  
  
