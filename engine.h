@@ -14,6 +14,7 @@
 #include "GameState.h"
 
 int badEvaluation(GameState *gs);
-int moveGen(Move *moveList, GameState *gs); 
-
+int moveGen(Move **moveList, GameState *gs);
+int calcKingMoves(Move **kingList, Square origin_sq, GameState *gs);
+int calcKnightMoves(Move **kingList, Square origin_sq, GameState *gs);
 #endif /* engine_h */

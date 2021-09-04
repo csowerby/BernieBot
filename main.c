@@ -22,13 +22,26 @@ void moveInput(void){
 /*
  
  TODO: -
- * Write function to rotate bitboards, rotate, diag, adiag
- * Write function to update the gamestate for each move
- * write function to search for each move
-    * maybe separate function for each type of move? king, knight, pawn, pawn cap, rank slide, file slide, diag, adiag?
+ 
+ * Just finished kingmove/knightMove functions
+    * Just finished move decoder function
+ 
+ Next:
+ * Implement the rest of the moveGen functions
+    * Sliding pieces (diagonal too)
+    *
+ 
+ * Implement move checking?
+    * Bitboards for attacking pieces?
+    * vector attacks?
+ 
 
+ * Write function to update the gamestate for each move
+    
+ 
  * Implement minimax
- * implement ab pruning 
+ * implement ab pruning
+ * Implement different moveGen that separates quiet moves and attacks?
  
 
   * Zobrist hashing not super important -> implement for transposition table.
@@ -44,59 +57,42 @@ void moveInput(void){
  
  */
 
+
+
+
 int main(void) {
-    /*
-    Square test_norm_to_diag[64];
-    Square test_diag_to_norm[64];
     
-    int diag_sq = 56;
-    // TOP HALF
-    for(int i = 7; i >= 0; i-- ){
-        for (int j = 0;  j + i <= 7; j++){
-            printf("norm Board: %2i - %2i : rot Board \n", 8 * (7 - j) + i + j, diag_sq);
-            
-            test_norm_to_diag[8 * (7 - j) + i + j] = (Square) diag_sq;
-            test_diag_to_norm[diag_sq] =  8 * (7 - j) + i + j;
-            // Increment square counter
-            if (diag_sq % 8 == 7){
-                diag_sq -= 15;
-
-            }else{
-                diag_sq++;
-            }
-        }
-    }
-    for(int i = 6; i >= 0; i--){
-        for (int j = 0; j <= i; j++){
-            printf("norm Board: %i - %i : rot Board \n", (8 * (i - j)) + j, diag_sq);
-            test_norm_to_diag[(8 * (i - j)) + j] = (Square) diag_sq;
-            test_diag_to_norm[diag_sq] =  (8 * (i - j)) + j;
-            // Increment square counter
-            if (diag_sq % 8 == 7){
-                diag_sq -= 15;
-
-            }else{
-                diag_sq++;
-            }
-        }
-    }
-    printf("\n");
-
-    */
+    
+    /* IN LLDB DEBUGGER
+     type format add -f binary Move
+     type format add -f bytes BitBoard
+     type format add -f decimal Square
+     
+     
+     */
     init();
     
-
     
     GameState gs;
     //init_GameState(&gs, "r1bq1bnr/p1p2ppp/3pk3/4p3/2Q1P3/5N2/PPPP1PPP/RNB2RK1 b - - 0 9");
     
-    init_GameState(&gs, "B7/1B6/2B5/3B4/4B3/5B2/6B1/7B w - - 0 1");
-    printGameStateInfo(&gs);
-
-
+    //init_GameState(&gs, "B7/1B6/2B5/3B4/4B3/5B2/6B1/7B w - - 0 1");
+    init_GameState(&gs, NULL);
+    printGameStateInfo(&gs, false);
+    
+    Move *kingList = NULL;
+    int len = calcKnightMoves(&kingList, d7, &gs);
+    
+    
+    Move move;
+    for (int i = 0; i < len; i++){
+        move = kingList[i];
+        printMoveInfo(&move);
+        }
     
     
     return 0;
+
 
 }
 

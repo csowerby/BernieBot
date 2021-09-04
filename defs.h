@@ -51,7 +51,8 @@ enum {wP, wN, wB, wR, wQ, wK, bP, bN, bB, bR, bQ, bK, no_pce};
 // Castling
 enum {w_short_castle = 8, w_long_castle=4, b_short_castle=2, b_long_castle=1};
 
-
+// Bitboards
+enum bitboards {wPawns, bPawns, wPieces, bPieces, aPieces};
 
 /* ------ DECLARATIONS --------*/
 typedef uint64_t BitBoard;
@@ -79,6 +80,7 @@ static const Square adiag_to_norm[64] = {10, 3, 16, 9, 2, 8, 1, 0, 5, 32, 25, 18
 
 
 /* ------------ DEFAULT METHODS --------*/
+void printMoveInfo(Move *move);
 const char* square_num_to_coords(char *str, int num);
 int square_coords_to_num(int rank, char file);
 char pieceNumToChar(int num);

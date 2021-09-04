@@ -68,7 +68,7 @@ int adiagBitBoard(BitBoard *oldBoard, BitBoard *newBoard);
 
 
 /* ------ METHODS FOR PRINTING GAMESTATE -------*/
-void printGameStateInfo(GameState *gs);
+void printGameStateInfo(GameState *gs, bool printBitBoards);
 void printGameBoard(GameState *gs);
 void printBitBoard(BitBoard *bBoard, int nBitBoard);
 

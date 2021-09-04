@@ -24,12 +24,30 @@ const char *chessPieces[13] = {"\u2659","\u2658","\u2657","\u2656"," \u2655","\u
 
 /* --------- DEFAULT METHODS --------------- */
 
+void printMoveInfo(Move *move){
+    Square targetSquare = 63 & (*move >> 4);
+    Square originSquare = (*move >> 10);
+    char str[3];
+    printf("Move info: %i\n", *move);
+    square_num_to_coords(str, originSquare);
+    printf("Origin Square: %s\n", str);
+    square_num_to_coords(str, targetSquare);
+    printf("Target Square: %s\n", str);
+    printf("Special Flags (promo, cap, sp0, sp1): ");
+    for (int i = 3; i>= 0; i--){
+        printf("%i", getBit((BitBoard*)move, i));
+    }
+    printf("\n\n");
+}
+
+
 const char* square_num_to_coords(char *str, int num){
     int rank = num / 8;
     int file = num % 8;
     
     str[0] = 'a' + file;
     str[1] = '1' + rank;
+    str[2] = '\0';
 
     return str;
 }
