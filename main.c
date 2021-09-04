@@ -76,17 +76,17 @@ int main(void) {
     GameState gs;
     //init_GameState(&gs, "r1bq1bnr/p1p2ppp/3pk3/4p3/2Q1P3/5N2/PPPP1PPP/RNB2RK1 b - - 0 9");
     
-    //init_GameState(&gs, "B7/1B6/2B5/3B4/4B3/5B2/6B1/7B w - - 0 1");
-    init_GameState(&gs, NULL);
+    init_GameState(&gs, "B7/1B6/2B5/3B4/4B3/5B2/6B1/7B w - - 0 1");
+    //init_GameState(&gs, NULL);
     printGameStateInfo(&gs, false);
     
-    Move *kingList = NULL;
-    int len = calcKnightMoves(&kingList, d7, &gs);
+    Move* slidingList = NULL;
+    int len = calcSlidingMoves(&slidingList, d2, &gs);
     
     
     Move move;
     for (int i = 0; i < len; i++){
-        move = kingList[i];
+        move = slidingList[i];
         printMoveInfo(&move);
         }
     

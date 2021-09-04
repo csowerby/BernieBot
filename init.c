@@ -271,15 +271,15 @@ void preCalcSlidingMoves(BitBoard rankMoves[64][256]){
             
             //printf("Trying square = %i and occNum %i\n", square, occNum);
             
-            for (int i = 1; i + file < 8; i++){
+            for (int i = 1; i + file < 7; i++){
                 setBit((&rankMoves[square][occNum]), square + i);
-                if (occNum >> (7 - file - i) & 1){
+                if (occNum >> (file + i) & 1){
                     break;
                 }
             }
             for (int i = -1; file + i >= 0; i--){
                     setBit((&rankMoves[square][occNum]), square + i);
-                    if (occNum >> (7 - file - i) & 1){
+                    if (occNum >> (file + i) & 1){
                         break;
                 }
             }

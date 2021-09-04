@@ -89,14 +89,21 @@ int moveGen(Move **moveList, GameState *gs){
 
 
 int calcKnightMoves(Move **knightList, Square origin_sq, GameState *gs){
-    // CALCULATE KNIGHT MOVES, DYNAMICALLY ALLOCATE SHIT
-    // Create a list of 8 possible moves, will realloc later to chop off the unused part.
+    /* Calculate Knight Moves
+     Params:
+        - **knightList: double pointer to array of knightMoves initialized as null
+        - origin_sq: origin square of the moves being considered
+        - *gs: current gamestate moves are being generated for
+     
+     Returns: integer length of knightList that was returned
+     
+     */
     Move *moveList;
     moveList = malloc(8 * sizeof(Move));
     int moveCount = 0;
     
     // Start with a bitboard of possible moves
-    BitBoard moveBoard;
+    BitBoard moveBoard = 0ULL;
     if (gs->whiteToMove){
         moveBoard = knightMoves[origin_sq] & ~(gs->boards[wPieces]);
     }else{
@@ -132,12 +139,17 @@ int calcKnightMoves(Move **knightList, Square origin_sq, GameState *gs){
 
 
 int calcKingMoves(Move **kingList, Square origin_sq, GameState *gs){
-    /* Params
-    
+    /* Params:
+        - **kingList: double pointer to list of king moves: should be initialized as null
+        - origin_sq: Initial square of move
+        - *gs: pointer to gamestate we'd like to calculate moves with
+     
+     Returns:
+        - integer length of kingList
      */
     Move* moveList = (Move*)malloc(8* sizeof(Move));
     int moveCount = 0;
-    BitBoard moveBoard;
+    BitBoard moveBoard = 0ULL;
     if (gs->whiteToMove){
         moveBoard = kingMoves[origin_sq] & ~(gs->boards[wPieces]);
     }else{
@@ -145,7 +157,6 @@ int calcKingMoves(Move **kingList, Square origin_sq, GameState *gs){
     }
     Square targetSquare;
     
-
     // Loop through the boards
     while(moveBoard){
         moveList[moveCount] = 0;
@@ -167,11 +178,75 @@ int calcKingMoves(Move **kingList, Square origin_sq, GameState *gs){
         
         moveCount++;
     }
-    
-
-    
-    
     moveList = (Move*) realloc(moveList, moveCount * sizeof(Move));
     *kingList = moveList; 
+    return moveCount;
+}
+
+int calcSlidingMoves(Move **slidingList, Square origin_sq, GameState *gs){
+    /* Params:
+        - **slidingList: double pointer to list of sliding moves: should be initialized as null
+        - origin_sq: Initial square of move
+        - *gs: pointer to gamestate we'd like to calculate moves with
+     
+     Returns:
+        - integer length of kingList
+     */
+    
+    // Allocate 14 Moves worth of memory because its the maximum move capacity
+    Move* moveList = (Move*)malloc(14* sizeof(Move));
+    int moveCount = 0;
+    BitBoard moveBoard = 0ULL;
+    
+    // Start by calculating all the horizontalMoves
+    
+    
+    // Calculate occupation number for the rank
+    int rank = origin_sq / 8;
+    
+    
+    int occNum = 255 & (gs->boards[aPieces] >> (8 * rank));
+    
+    // Remove capturs of own pieces and add attackMoves to a separate list:
+    BitBoard attacks;
+    BitBoard horizontalBoard = slidingMoves[origin_sq][occNum];
+    printBitBoard(&horizontalBoard, 0);
+    if (gs->whiteToMove){
+        attacks = horizontalBoard & gs->boards[bPieces];
+        horizontalBoard &= ~(gs->boards[aPieces]);
+    }else{
+        attacks = horizontalBoard & gs->boards[wPieces];
+        horizontalBoard &= ~(gs->boards[aPieces]);
+    }
+    moveBoard &= horizontalBoard;
+    
+    //TODO: IMPLEMENT VERTICAL SLIDING MOVES HERE
+    
+    // Now loop through and append moves: attacks first
+    Square targetSquare;
+    
+    // Loop through the boards
+    while(moveBoard){
+        moveList[moveCount] = 0;
+        targetSquare = get_ls1b_pos(&moveBoard);
+        printBitBoard(&moveBoard, 0);
+        clearBit(&moveBoard, targetSquare);
+        moveList[moveCount] += targetSquare << 4;
+        moveList[moveCount] += origin_sq << 10;
+        // Check if capture, if so append 100 on the end
+        if (gs->whiteToMove){
+            if(getBit(&gs->boards[bPieces], targetSquare)){
+                moveList[moveCount] += 4;
+            }
+        }else{
+            if(getBit(&gs->boards[wPieces], targetSquare)){
+                moveList[moveCount] += 4;
+            }
+        }
+        
+        moveCount++;
+    }
+    moveList = (Move*) realloc(moveList, moveCount * sizeof(Move));
+    *slidingList = moveList;
     return moveCount;
 }
