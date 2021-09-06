@@ -240,12 +240,8 @@ int calcSlidingMoves(Move **slidingList, Square origin_sq, GameState *gs){
         verticalAttacks = verticalBoard & gs->rot_boards[wPieces];
         verticalBoard &= ~(gs->rot_boards[aPieces]);
     }
-    
-    //printBitBoard(&verticalAttacks, 0);
-    //printBitBoard(&verticalBoard, 0);
-    
-    
-    // Now loop through and append moves: attacks first
+
+    // Now loop through and append moves to finalList: attacks first
     Square targetSquare;
     Square rot_targetSquare;
     while(verticalAttacks){
@@ -297,7 +293,26 @@ int calcSlidingMoves(Move **slidingList, Square origin_sq, GameState *gs){
 }
 
 int calcDiagMoves(Move **diagList, Square origin_sq, GameState *gs){
-    //TODO: - 
+    /* Params:
+        - **diagList: double pointer to list of sliding moves: should be initialized as null
+        - origin_sq: Initial square of move
+        - *gs: pointer to gamestate we'd like to calculate moves with
+     
+     Returns:
+        - integer length of diagList
+     */
+    Move* moveList = (Move*)malloc(13* sizeof(Move)); // 13 maxmium number of bishop moves
+    int moveCount = 0;
+    BitBoard moveBoard = 0ULL;
+    
+    // Calculate Occupancy Number for Diagonal
+    BitBoard occBoard = gs->rot_boards[aPieces]; 
+    
+    // Get moves for given square and occNum
+    
+    
+    // Calculate Occupancy Number for Anti-diagonal
+    
     
     return 0; 
 }

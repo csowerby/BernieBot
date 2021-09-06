@@ -19,6 +19,8 @@ BitBoard slidingMoves[64][256] = {0};
 BitBoard pawnCaptures[64][2] = {0};
 uint64_t zobristTable[64][12] = {0};
 
+uint8_t diagonalSizes[64];
+uint8_t aDiagonalSizes[64]; 
 const char *chessPieces[13] = {"\u2659","\u2658","\u2657","\u2656"," \u2655","\u2654","\u265F","\u265E","\u265D","\u265C","\u265B","\u265A", " "};
 
 
@@ -316,6 +318,23 @@ void preCalcPawnCaptures(BitBoard pawnCaptures[64][2]){
 }
 
 
+void preCalcBishopDiagonals(uint8_t bishopDiagonals[64]){
+    for(int i = 0; i < 64; i++){
+        int rank = i / 8;
+        int file = i %8;
+        
+        bishopDiagonals[i] = (uint8_t) 7 - abs(rank - file);
+    }
+}
+
+void preCalcBishopADiagonalSizes(uint8_t aBishopDiagonals[64]){
+    for(int i = 0; i < 64; i++){
+        int rank = i / 8;
+        int file = i %8;
+        
+        aBishopDiagonals[i] = (uint8_t) 7 - abs(rank + file - 7);
+    }
+}
 
 void initZobrist(uint64_t zobristTable[64][12] ){
     // GENERATE RANDOM NUMBERS TO FILL THE ZOBRIST TABLE.
@@ -339,7 +358,9 @@ void init(){
     preCalcSlidingMoves(slidingMoves);
     printf("Precalculating Pawn Capture Tables...\n");
     preCalcPawnCaptures(pawnCaptures);
-    
+    printf("Precalculating Diagonal Sizes...\n");
+    preCalcBishopDiagonals(diagonalSizes);
+    preCalcBishopADiagonalSizes(aDiagonalSizes);
     initZobrist(zobristTable);
     
     

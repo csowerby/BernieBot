@@ -67,6 +67,8 @@ extern BitBoard kingMoves[64];
 extern BitBoard slidingMoves[64][256];
 extern uint64_t zobristTable[64][12];
 extern BitBoard pawnCaptures[64][2];
+extern uint8_t diagonalSizes[64]; 
+extern uint8_t aDiagonalSizes[64]; 
 extern const char *chessPieces[13];
 
 // BitBoard Rotations
@@ -95,6 +97,8 @@ void preCalcKnightMoves(BitBoard knightMoves[64]);
 void preCalcKingMoves(BitBoard kingMoves[64]);
 void preCalcSlidingMoves(BitBoard rankMoves[64][256]);
 void preCalcPawnCaptures(BitBoard pawnCaptures[64][2]);
+void preCalcBishopDiagonalSizes(uint8_t bishopDiagonals[64]);
+void preCalcBishopADiagonalSizes(uint8_t aBishopDiagonals[64]);
 void initZobrist(uint64_t zobrist_table[64][12] );
 
 void init(void);

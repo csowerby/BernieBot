@@ -57,40 +57,36 @@ void moveInput(void){
  
  */
 
+/* DEBUGGING FEN LIST:
+ 
+ * Starting position
+ "r1bq1bnr/p1p2ppp/3pk3/4p3/2Q1P3/5N2/PPPP1PPP/RNB2RK1 b - - 0 9"
+ 
+ * BISHOP anti-diagonal:
+ "b7/1b6/2b5/3b4/4b3/5b2/6b1/7b w - - 0 1"
+ 
+ 
+ * Square of various pieces:
+ 8/2RRRRR1/2P3P1/2P3P1/2bbbbb1/8/8/8 w - - 0 1
+ 
+ */
 
+/* IN LLDB DEBUGGER
+ type format add -f binary Move
+ type format add -f bytes BitBoard
+ type format add -f decimal Square
+ */
 
 
 int main(void) {
     clock_t executionStart = clock();
-    /* IN LLDB DEBUGGER
-     type format add -f binary Move
-     type format add -f bytes BitBoard
-     type format add -f decimal Square
-     
-     
-     */
+
     init();
-    
-    
     GameState gs;
-    //init_GameState(&gs, "r1bq1bnr/p1p2ppp/3pk3/4p3/2Q1P3/5N2/PPPP1PPP/RNB2RK1 b - - 0 9");
-    
-    init_GameState(&gs, "b7/1b6/2b5/3b4/4b3/5b2/6b1/7b w - - 0 1");
+
+    init_GameState(&gs, "8/2RRRRR1/2P3P1/2P3P1/2bbbbb1/8/8/8 w - - 0 1");
     //init_GameState(&gs, NULL);
     printGameStateInfo(&gs, false);
-    
-    Move* slidingList = NULL;
-    int len = calcSlidingMoves(&slidingList, d2, &gs);
-    
-    
-    Move move;
-    for (int i = 0; i < len; i++){
-        move = slidingList[i];
-        printMoveInfo(&move);
-        }
-    
-    
-    
     
     
     clock_t executionEnd = clock();
