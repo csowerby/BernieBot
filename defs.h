@@ -18,6 +18,8 @@
 #include <stdbool.h>
 #include <ctype.h>
 
+#include <time.h>
+
 #include <assert.h>
 
 /* ------ DEFINITIONS ----------*/

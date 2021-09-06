@@ -250,3 +250,9 @@ int calcSlidingMoves(Move **slidingList, Square origin_sq, GameState *gs){
     *slidingList = moveList;
     return moveCount;
 }
+
+int calcDiagMoves(Move **diagList, Square origin_sq, GameState *gs){
+    //TODO: - 
+    
+    return 0; 
+}

@@ -61,8 +61,7 @@ void moveInput(void){
 
 
 int main(void) {
-    
-    
+    clock_t executionStart = clock();
     /* IN LLDB DEBUGGER
      type format add -f binary Move
      type format add -f bytes BitBoard
@@ -91,9 +90,15 @@ int main(void) {
         }
     
     
+    
+    
+    
+    clock_t executionEnd = clock();
+
+    
+    double elapsedTime = (double) (executionEnd - executionStart)/ CLOCKS_PER_SEC;
+    printf("Execution finished in %f seconds.\n", elapsedTime);
     return 0;
-
-
 }
 
 
