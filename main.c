@@ -23,8 +23,7 @@ void moveInput(void){
  
  TODO: -
  
- * Just finished kingmove/knightMove functions
-    * Just finished move decoder function
+
  
  Next:
  * Implement the rest of the moveGen functions
@@ -47,6 +46,7 @@ void moveInput(void){
   * Zobrist hashing not super important -> implement for transposition table.
   * Move history? Is this necessary? 
  
+  * magic bitboards for move generation? 
  */
 
 /*
@@ -75,7 +75,7 @@ int main(void) {
     GameState gs;
     //init_GameState(&gs, "r1bq1bnr/p1p2ppp/3pk3/4p3/2Q1P3/5N2/PPPP1PPP/RNB2RK1 b - - 0 9");
     
-    init_GameState(&gs, "B7/1B6/2B5/3B4/4B3/5B2/6B1/7B w - - 0 1");
+    init_GameState(&gs, "b7/1b6/2b5/3b4/4b3/5b2/6b1/7b w - - 0 1");
     //init_GameState(&gs, NULL);
     printGameStateInfo(&gs, false);
     

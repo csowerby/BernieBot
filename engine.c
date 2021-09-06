@@ -203,49 +203,94 @@ int calcSlidingMoves(Move **slidingList, Square origin_sq, GameState *gs){
     
     // Calculate occupation number for the rank
     int rank = origin_sq / 8;
+    int file = origin_sq % 8;
     
     
     int occNum = 255 & (gs->boards[aPieces] >> (8 * rank));
     
     // Remove capturs of own pieces and add attackMoves to a separate list:
-    BitBoard attacks;
+    BitBoard horizontalAttacks;
     BitBoard horizontalBoard = slidingMoves[origin_sq][occNum];
-    printBitBoard(&horizontalBoard, 0);
+    //printBitBoard(&horizontalBoard, 0);
     if (gs->whiteToMove){
-        attacks = horizontalBoard & gs->boards[bPieces];
+        horizontalAttacks = horizontalBoard & gs->boards[bPieces];
         horizontalBoard &= ~(gs->boards[aPieces]);
     }else{
-        attacks = horizontalBoard & gs->boards[wPieces];
+        horizontalAttacks = horizontalBoard & gs->boards[wPieces];
         horizontalBoard &= ~(gs->boards[aPieces]);
     }
-    moveBoard &= horizontalBoard;
     
-    //TODO: IMPLEMENT VERTICAL SLIDING MOVES HERE
+    //printBitBoard(&horizontalAttacks, 0);
+    //printBitBoard(&horizontalBoard, 0);
+    
+    // Calculate Vertical Moves
+    
+    
+    Square rot_sq = 8 * file + rank;
+    int vert_occNum = 255 & (gs->rot_boards[aPieces] >> (8 * file));
+    BitBoard verticalBoard = slidingMoves[rot_sq][vert_occNum];
+    BitBoard verticalAttacks;
+    
+    //printBitBoard(&verticalBoard, 0);
+    
+    if (gs->whiteToMove){
+        verticalAttacks = verticalBoard & gs->rot_boards[bPieces];
+        verticalBoard &= ~(gs->rot_boards[aPieces]);
+    }else{
+        verticalAttacks = verticalBoard & gs->rot_boards[wPieces];
+        verticalBoard &= ~(gs->rot_boards[aPieces]);
+    }
+    
+    //printBitBoard(&verticalAttacks, 0);
+    //printBitBoard(&verticalBoard, 0);
+    
     
     // Now loop through and append moves: attacks first
     Square targetSquare;
-    
-    // Loop through the boards
-    while(moveBoard){
+    Square rot_targetSquare;
+    while(verticalAttacks){
+        // Append Vertical Attacks
         moveList[moveCount] = 0;
-        targetSquare = get_ls1b_pos(&moveBoard);
-        printBitBoard(&moveBoard, 0);
-        clearBit(&moveBoard, targetSquare);
+        rot_targetSquare = get_ls1b_pos(&verticalAttacks);
+        targetSquare = 8 * (rot_targetSquare % 8) + (rot_targetSquare / 8);
+        clearBit(&verticalAttacks, rot_targetSquare);
         moveList[moveCount] += targetSquare << 4;
         moveList[moveCount] += origin_sq << 10;
-        // Check if capture, if so append 100 on the end
-        if (gs->whiteToMove){
-            if(getBit(&gs->boards[bPieces], targetSquare)){
-                moveList[moveCount] += 4;
-            }
-        }else{
-            if(getBit(&gs->boards[wPieces], targetSquare)){
-                moveList[moveCount] += 4;
-            }
-        }
-        
+        // Append set 4digit code to 0100 because capture.
+        moveList[moveCount] += 4;
         moveCount++;
     }
+    while(horizontalAttacks){
+        // Append Horizontal Attacks
+        moveList[moveCount] = 0;
+        targetSquare = get_ls1b_pos(&horizontalAttacks);
+        clearBit(&horizontalAttacks, targetSquare);
+        moveList[moveCount] += targetSquare << 4;
+        moveList[moveCount] += origin_sq << 10;
+        // Append set 4digit code to 0100 because capture.
+        moveList[moveCount] += 4;
+        moveCount++;
+    }
+    while(horizontalBoard) {
+        // Append Horizontal QuietMoves
+        moveList[moveCount] = 0;
+        targetSquare = get_ls1b_pos(&horizontalBoard);
+        clearBit(&horizontalBoard, targetSquare);
+        moveList[moveCount] += targetSquare << 4;
+        moveList[moveCount] += origin_sq << 10;
+        moveCount++;
+    }
+    while(verticalBoard){
+        // Append Vertical QuietMoves
+        moveList[moveCount] = 0;
+        rot_targetSquare = get_ls1b_pos(&verticalBoard);
+        targetSquare = 8 * (rot_targetSquare % 8) + (rot_targetSquare / 8);
+        clearBit(&verticalBoard, rot_targetSquare);
+        moveList[moveCount] += targetSquare << 4;
+        moveList[moveCount] += origin_sq << 10;
+        moveCount++;
+    }
+    
     moveList = (Move*) realloc(moveList, moveCount * sizeof(Move));
     *slidingList = moveList;
     return moveCount;
