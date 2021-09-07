@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include "defs.h"
+#include "magic.h"
 #include "GameState.h"
 
 
@@ -17,19 +18,14 @@ BitBoard knightMoves[64] = {0};
 BitBoard kingMoves[64] = {0};
 
 
-BitBoard rookMoves[64][256] = {0};
-BitBoard bishopMoves[64][256] = {0};
-
-
 BitBoard pawnCaptures[64][2] = {0};
 uint64_t zobristTable[64][12] = {0};
 
-uint8_t diagonalSizes[64];
-uint8_t aDiagonalSizes[64];
 
 // Magics
 sMagic rookMagics[64];
 sMagic bishopMagics[64];
+BitBoard attacks[ATTACK_LENGTH] = {0}; // 107684 Bitboards = ~800 kB of attacks
 
 const char *chessPieces[13] = {"\u2659","\u2658","\u2657","\u2656"," \u2655","\u2654","\u265F","\u265E","\u265D","\u265C","\u265B","\u265A", " "};
 
@@ -274,38 +270,6 @@ void preCalcKingMoves(BitBoard kingMoves[64]){
 }
 
 
-void preCalcRookMoves(BitBoard rankMoves[64][256]){
-    // Rankmoves in indexed by rankMoves[square][occNum]
-    for (int square = 0; square < 64; square++){
-        for (int occNum = 0; occNum < 256; occNum++){
-            //int rank = square / 8;
-            int file = square % 8;
-            
-            //printf("Trying square = %i and occNum %i\n", square, occNum);
-            
-            for (int i = 1; i + file < 7; i++){
-                setBit((&rankMoves[square][occNum]), square + i);
-                if (occNum >> (file + i) & 1){
-                    break;
-                }
-            }
-            for (int i = -1; file + i >= 0; i--){
-                    setBit((&rankMoves[square][occNum]), square + i);
-                    if (occNum >> (file + i) & 1){
-                        break;
-                }
-            }
-            
-            
-            //printf("Finished rankMoves for square = %i and occNum = %i \n", square, occNum);
-        }
-        
-    }
-}
-
-void preCalcBishopMoves(BitBoard bishopMoves[64][256]){
-    
-}
 
 void preCalcPawnCaptures(BitBoard pawnCaptures[64][2]){
     // Indexed by square and pawn color. WHITE = 0, BLACK = 1.
@@ -332,33 +296,15 @@ void preCalcPawnCaptures(BitBoard pawnCaptures[64][2]){
 }
 
 
-void preCalcBishopDiagonals(uint8_t bishopDiagonals[64]){
-    for(int i = 0; i < 64; i++){
-        int rank = i / 8;
-        int file = i %8;
-        
-        bishopDiagonals[i] = (uint8_t) 7 - abs(rank - file);
-        
-    }
-}
-
-void preCalcBishopADiagonalSizes(uint8_t aBishopDiagonals[64]){
-    for(int i = 0; i < 64; i++){
-        int rank = i / 8;
-        int file = i %8;
-        
-        aBishopDiagonals[i] = (uint8_t) 7 - abs(rank + file - 7);
-    }
-}
 
 void initZobrist(uint64_t zobristTable[64][12] ){
     // GENERATE RANDOM NUMBERS TO FILL THE ZOBRIST TABLE.
-    
+    // TODO: -
     // Probably just want to calculate once and leave them here.
 }
 
 
-// MAGIC SHIT
+// Magics Precalculation
 
 int generateRookMasks(BitBoard rookMasks[64]){
     for(int i = 0; i < 64; i++){
@@ -402,8 +348,50 @@ int generateBishopMasks(BitBoard bishopMasks[64]){
     return 0;
 }
 
-void init_magics(sMagic rookMagics[64], sMagic bishopMagics[64]){
+
+
+void init_magics(sMagic rookMagics[64], sMagic bishopMagics[64], BitBoard attacks[ATTACK_LENGTH]){
     
+    BitBoard bishopMasks[64] = {0};
+    BitBoard rookMasks[64] = {0};
+    
+    generateRookMasks(rookMasks);
+    generateBishopMasks(bishopMasks);
+    
+    // Loop and fill sMagics
+    int attackCounter = 0;
+    
+    for(Square i = a1; i < h8; i++){
+        // Pointer to AttackList
+        rookMagics[i].attackPtr = attacks + attackCounter;
+        attackCounter += 1 << RBits[i];
+        
+        // Mask
+        rookMagics[i].mask = rookMasks[i];
+        
+        // Magic Number
+        rookMagics[i].magic = rMagicNumbers[i];
+        
+        // Shift
+        rookMagics[i].shift = 64 - RBits[i];
+    }
+}
+
+BitBoard genRookAttacks(Square current_sq, BitBoard blockers){
+    
+    return 0ULL;
+}
+
+BitBoard genBishopAttacks(Square current_sq, BitBoard blockers){
+    
+    return 0ULL; 
+}
+
+void init_attacks(BitBoard attacks[ATTACK_LENGTH]){
+    // Loop through Squares
+    for (Square i = a1; i < h8; i++){
+        // Generate all
+    }
 }
 
 
@@ -412,21 +400,12 @@ void init_magics(sMagic rookMagics[64], sMagic bishopMagics[64]){
 
 /* INITIALIZATION REQUIRED FOR PLAYING A GAME */
 void init(){
-    printf("Initializing Game...\n");
-    
-    printf("Precalculating Knight Move Tables...\n");
+
     preCalcKnightMoves(knightMoves);
-    printf("Precalculating King Move Tables...\n");
     preCalcKingMoves(kingMoves);
-    printf("Precalculating Rank Move Tables...\n");
-    preCalcRookMoves(rookMoves);
-    printf("Precalculating Pawn Capture Tables...\n");
     preCalcPawnCaptures(pawnCaptures);
-    printf("Precalculating Diagonal Sizes...\n");
-    preCalcBishopDiagonals(diagonalSizes);
-    preCalcBishopADiagonalSizes(aDiagonalSizes);
     initZobrist(zobristTable);
-    init_magics(rookMagics, bishopMagics); 
+    init_magics(rookMagics, bishopMagics, attacks);
     
     
 }

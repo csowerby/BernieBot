@@ -36,97 +36,11 @@ uint8_t get_ls1b_pos(BitBoard *board){
     return (uint8_t) DeBruijnBitPosition[((uint64_t)((*board & -(*board)) * debrujin64)) >> 58];
 }
 
-// BITBOARD ROTATIONS
 
 
 
-int rotateBitBoard(BitBoard *oldBoard, BitBoard *newBoard){
-    for (int rank = 0; rank < 8; rank++){
-        for(int file = 0; file < 8; file++){
-            if (getBit(oldBoard, 8*rank + file)){
-                setBit(newBoard, 8*file + rank);
-            }else{
-                clearBit(newBoard, 8 * file + rank);
-            }
-        }
-    }
-    
-    return 0;
-}
-
-int diagBitBoard(BitBoard *oldBoard, BitBoard *newBoard){
-    for (int i = 0; i < 64; i++) {
-        if (getBit(oldBoard, i)){
-            setBit(newBoard, norm_to_diag[i]);
-        }else{
-            clearBit(newBoard, norm_to_diag[i]);
-        }
-    }
-    return 0;
-}
 
 
-
-int adiagBitBoard(BitBoard *oldBoard, BitBoard *newBoard){
-    // ADiagonal from a8-h1
-    /*
-    printf("Rotating BitBoard - ANTI DIAGONAL \n\n");
-    printf("OLD BOARD: \n");
-    printBitBoard(oldBoard, 0);
-    printf("NEW BOARD: \n");
-    int diag_sq = 56;
-    // TOP HALF
-    for(int i = 1; i <= 8; i++ ){
-        for (int j = 0; j < i; j++){
-            if(getBit(oldBoard, 8 * (8 - i + j) + j)){
-                setBit(newBoard, diag_sq);
-                printf("1 ");
-            }else{
-                clearBit(newBoard, diag_sq);
-                printf("0 ");
-            }
-            // Increment square counter
-            if (diag_sq % 8 == 7){
-                diag_sq -= 15;
-                printf("\n");
-            }else{
-                diag_sq++;
-            }
-        }
-    }
-    for(int i = 1; i < 8; i++){
-        for (int j = 0; j < 8-i; j++){
-            if(getBit(oldBoard, 8 * j + i + j)){
-                setBit(newBoard, diag_sq);
-                printf("1 ");
-            }else{
-                clearBit(newBoard, diag_sq);
-                 printf("0 ");
-            }
-            
-            // Increment square counter
-            if (diag_sq % 8 == 7){
-                diag_sq -= 15;
-                printf("\n");
-            }else{
-                diag_sq++;
-            }
-        }
-    }
-    printf("\n");
-    
-    printBitBoard(newBoard, 0);
-    */
-    for (int i = 0; i < 64; i++) {
-        if (getBit(oldBoard, i)){
-            setBit(newBoard, norm_to_adiag[i]);
-        }else{
-            clearBit(newBoard, norm_to_adiag[i]);
-        }
-    }
-    return 0;
-    return 0;
-}
 
 
 /* ------- GAMESTATE INITIALIZATION --------- */
@@ -134,9 +48,7 @@ void init_GameState(GameState *gs, char *fen){
     // Fill arrays with zero
     for (int i = 0; i < NUM_BOARDS; i++){
         gs->boards[i] = 0ULL;
-        gs-> rot_boards[i] = 0ULL;
-        gs-> diag_boards[i] = 0ULL;
-        gs-> adiag_boards[i] = 0ULL;
+
     }
     for (int i = 0; i < 12; i ++){
         for (int j = 0; j < 10; j++){
@@ -209,16 +121,6 @@ void init_GameState(GameState *gs, char *fen){
         }
     }
     
-    
-    
-    
-    // ROTATE BITBOARDS:
-
-    for(int i = 0; i < NUM_BOARDS; i++){
-        rotateBitBoard(&gs->boards[i], &gs->rot_boards[i]);
-        diagBitBoard(&gs->boards[i], &gs->diag_boards[i]);
-        adiagBitBoard(&gs->boards[i], &gs->adiag_boards[i]);
-    }
      
      
      
@@ -349,13 +251,6 @@ void printGameStateInfo(GameState *gs, bool printBitBoards){
         printf("BitBoards: (wPawns, bPawns, wPieces, bPieces, aPieces, wAttacks, bAttacks)...\n");
         for (int i = 0; i < NUM_BOARDS; i++){
             printBitBoard(gs->boards, i);
-        }
-        printf("Rotated Boards: rot, diag, aDiag:\n");
-        for (int i = 0; i < NUM_BOARDS; i++){
-            printf("%i: \n\n", i);
-            printBitBoard(gs->rot_boards, i);
-            printBitBoard(gs->diag_boards, i);
-            printBitBoard(gs->adiag_boards, i);
         }
     }
     

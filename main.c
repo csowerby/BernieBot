@@ -26,6 +26,9 @@ void moveInput(void){
 
  
  Next:
+ 
+ * MAGIC BITBOARDS!!!
+ 
  * Implement the rest of the moveGen functions
     * Sliding pieces (diagonal too)
     *
@@ -79,6 +82,7 @@ void moveInput(void){
  type format add -f decimal Square
  */
 
+#include "magic.h"
 
 int main(void) {
     clock_t executionStart = clock();
@@ -89,7 +93,11 @@ int main(void) {
     printGameStateInfo(&gs, false);
     */
     
-
+    int sum = 0;
+    for(int i = 0; i < 64; i++){
+        sum += (1 << RBits[i]) + (1 << BBits[i]);
+    }
+    printf("Size of array: %i\n", sum); 
     
     
     

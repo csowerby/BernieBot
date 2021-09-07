@@ -23,9 +23,6 @@
 typedef struct{
     
     BitBoard boards[NUM_BOARDS]; // wP, bP, wPce, bPce, aPce
-    BitBoard rot_boards[NUM_BOARDS];
-    BitBoard diag_boards[NUM_BOARDS];
-    BitBoard adiag_boards[NUM_BOARDS];
     
     Square pceList[12][10]; // Represents an array of the 10 possible pieces and it is possible to have 10 of each piece, fill with square numbers for each one, no_sqr
     uint8_t numPieces[12];
@@ -54,11 +51,6 @@ typedef struct{
 /* --------------- GameState Methods ------------- */
 void init_GameState(GameState *gs, char *fen);
 int updateGameState(GameState *gs, Move*move);
-
-// Rotation Methods
-int rotateBitBoard(BitBoard *oldBoard, BitBoard *newBoard);
-int diagBitBoard(BitBoard *oldBoard, BitBoard *newBoard);
-int adiagBitBoard(BitBoard *oldBoard, BitBoard *newBoard);
 
 
 

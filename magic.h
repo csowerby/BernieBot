@@ -9,17 +9,13 @@
 #ifndef magic_h
 #define magic_h
 
-#include "defs.h"
 #include <stdio.h>
 
-/* ------------------ */
 
-
-/* ------------------*/
 
 
 /* ------------------- */
-static int RBits[64] = {
+const static int RBits[64] = {
   12, 11, 11, 11, 11, 11, 11, 12,
   11, 10, 10, 10, 10, 10, 10, 11,
   11, 10, 10, 10, 10, 10, 10, 11,
@@ -30,7 +26,7 @@ static int RBits[64] = {
   12, 11, 11, 11, 11, 11, 11, 12
 };
 
-static int BBits[64] = {
+const static int BBits[64] = {
   6, 5, 5, 5, 5, 5, 5, 6,
   5, 5, 5, 5, 5, 5, 5, 5,
   5, 5, 7, 7, 7, 7, 5, 5,
@@ -41,9 +37,10 @@ static int BBits[64] = {
   6, 5, 5, 5, 5, 5, 5, 6
 };
 
-// Stole these from https://www.chessprogramming.org/Looking_for_Magics and https://www.chessprogramming.org/Best_Magics_so_far
+/*  Stole the generation code from https://www.chessprogramming.org/Looking_for_Magics and https://www.chessprogramming.org/Best_Magics_so_far because I'm lazy - maybe in the future i'll look for better magics
+ */
 
-static const uint64_t RMagic[64] = {
+const static uint64_t rMagicNumbers[64] = {
   0x2080020500400f0ULL,
   0x28444000400010ULL,
   0x20000a1004100014ULL,
@@ -110,7 +107,7 @@ static const uint64_t RMagic[64] = {
   0x4000882304000041ULL,
 };
 
-static const uint64_t BMagic[64] = {
+const static uint64_t bMagicNumbers[64] = {
   0x100420000431024ULL,
   0x280800101073404ULL,
   0x42000a00840802ULL,
