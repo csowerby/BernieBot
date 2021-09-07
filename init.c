@@ -361,7 +361,8 @@ void init_magics(sMagic rookMagics[64], sMagic bishopMagics[64], BitBoard attack
     // Loop and fill sMagics
     int attackCounter = 0;
     
-    for(Square i = a1; i < h8; i++){
+    // ROOKS
+    for(Square i = a1; i <= h8; i++){
         // Pointer to AttackList
         rookMagics[i].attackPtr = attacks + attackCounter;
         attackCounter += 1 << RBits[i];
@@ -375,24 +376,137 @@ void init_magics(sMagic rookMagics[64], sMagic bishopMagics[64], BitBoard attack
         // Shift
         rookMagics[i].shift = 64 - RBits[i];
     }
+    // BISHOPS
+    for(Square i = a1; i <= h8; i++){
+        // Pointer to AttackList
+        bishopMagics[i].attackPtr = attacks + attackCounter;
+        attackCounter += 1 << BBits[i];
+        
+        // Mask
+        bishopMagics[i].mask = bishopMasks[i];
+        
+        // Magic Number
+        bishopMagics[i].magic = bMagicNumbers[i];
+        
+        // Shift
+        bishopMagics[i].shift = 64 - BBits[i];
+    }
 }
 
 BitBoard genRookAttacks(Square current_sq, BitBoard blockers){
-    
-    return 0ULL;
+    // Stole this https://www.chessprogramming.org/Looking_for_Magics
+    uint64_t result = 0ULL;
+    int rk = current_sq/8, fl = current_sq%8, r, f;
+    for(r = rk+1; r <= 7; r++) {
+      result |= (1ULL << (fl + r*8));
+      if(blockers & (1ULL << (fl + r*8))) break;
+    }
+    for(r = rk-1; r >= 0; r--) {
+      result |= (1ULL << (fl + r*8));
+      if(blockers & (1ULL << (fl + r*8))) break;
+    }
+    for(f = fl+1; f <= 7; f++) {
+      result |= (1ULL << (f + rk*8));
+      if(blockers & (1ULL << (f + rk*8))) break;
+    }
+    for(f = fl-1; f >= 0; f--) {
+      result |= (1ULL << (f + rk*8));
+      if(blockers & (1ULL << (f + rk*8))) break;
+    }
+    return result;
 }
 
 BitBoard genBishopAttacks(Square current_sq, BitBoard blockers){
-    
-    return 0ULL; 
+    // Stole this https://www.chessprogramming.org/Looking_for_Magics
+    uint64_t result = 0ULL;
+    int rk = current_sq/8, fl = current_sq%8, r, f;
+    for(r = rk+1, f = fl+1; r <= 7 && f <= 7; r++, f++) {
+      result |= (1ULL << (f + r*8));
+      if(blockers & (1ULL << (f + r * 8))) break;
+    }
+    for(r = rk+1, f = fl-1; r <= 7 && f >= 0; r++, f--) {
+      result |= (1ULL << (f + r*8));
+      if(blockers & (1ULL << (f + r * 8))) break;
+    }
+    for(r = rk-1, f = fl+1; r >= 0 && f <= 7; r--, f++) {
+      result |= (1ULL << (f + r*8));
+      if(blockers & (1ULL << (f + r * 8))) break;
+    }
+    for(r = rk-1, f = fl-1; r >= 0 && f >= 0; r--, f--) {
+      result |= (1ULL << (f + r*8));
+      if(blockers & (1ULL << (f + r * 8))) break;
+    }
+    return result;
 }
 
+
+
 void init_attacks(BitBoard attacks[ATTACK_LENGTH]){
-    // Loop through Squares
-    for (Square i = a1; i < h8; i++){
-        // Generate all
+    // LOOP THROUGH ROOK SQUARES
+    for (Square i = a1; i <= h8; i++){
+        printf("Starting square: %i\n\n", i);
+        
+        // Generate all Possible ROOK Blockers
+        BitBoard blockers[8192] = {0ULL};
+        int rank = i/8;
+        int file = i%8;
+        
+        
+        for(BitBoard j = 0; j < 8192; j++){
+            int plus1 = 0;
+            for(int k = 0; k < 7; k++){
+                if (k == rank){
+                    plus1 = 1;
+                }
+                if(getBit(&j, k)){
+                    setBit(&blockers[j], 8 * (k + plus1) + file);
+                }
+            }
+            plus1 = 0;
+            for(int k = 0; k < 7; k++){
+                if (k == file){
+                    plus1 = 1;
+                }
+                if(getBit(&j, k+7)){
+                    setBit(&blockers[j], (8 * rank) + k + plus1);
+                }
+            }
+            //printf("occupancy number: %i\n", j);
+            //printBitBoard(&blockers[j], 0);
+        }
+        
+        
+        for (int j = 0; j < (1 << 13); j++){
+            BitBoard occ = rookMagics[i].mask & blockers[j];
+            occ *= rookMagics[i].magic;
+            occ >>= rookMagics[i].shift;
+            rookMagics[i].attackPtr[occ] = genRookAttacks(i, blockers[j]);
+        }
+
+    }
+    
+    // LOOP THROUGH BISHOP SQUARES
+    BitBoard blockers2[8192] = {0xFFFFFFFFFFFFFFFFULL};
+    int blockerCounter = 0;
+    int toBreak = 0;
+    for(Square i = a1; i <= h8; i++){
+        int rank = i/8;
+        int file = i&8;
+        
+        // Calculate all blockers for this square
+        //TODO: - 
+        
+
     }
 }
+
+BitBoard RookMoves(BitBoard Blockers, Square current_sq){
+    BitBoard occ = rookMagics[current_sq].mask & Blockers;
+    occ *= rookMagics[current_sq].magic;
+    occ >>= rookMagics[current_sq].shift;
+    return rookMagics[current_sq].attackPtr[occ];
+}
+
 
 
 
@@ -407,5 +521,9 @@ void init(){
     initZobrist(zobristTable);
     init_magics(rookMagics, bishopMagics, attacks);
     
+    
+    init_attacks(attacks);
+    
+
     
 }

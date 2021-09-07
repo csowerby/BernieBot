@@ -28,6 +28,7 @@ void moveInput(void){
  Next:
  
  * MAGIC BITBOARDS!!!
+    -working on magic bitboards, need to generate blockers for bishop moves in init file 
  
  * Implement the rest of the moveGen functions
     * Sliding pieces (diagonal too)
@@ -52,13 +53,7 @@ void moveInput(void){
   * magic bitboards for move generation? 
  */
 
-/*
- TODO: -
 
- 
- 
- 
- */
 
 /* DEBUGGING FEN LIST:
  
@@ -86,20 +81,18 @@ void moveInput(void){
 
 int main(void) {
     clock_t executionStart = clock();
-    /*
+    
+
+    
+    
     init();
     GameState gs;
     init_GameState(&gs, "3n3b/2n3b1/1n3b2/n3b3/3b3q/2b3q1/1b3q2/b3q3 w - - 0 1");
     printGameStateInfo(&gs, false);
-    */
-    
-    int sum = 0;
-    for(int i = 0; i < 64; i++){
-        sum += (1 << RBits[i]) + (1 << BBits[i]);
-    }
-    printf("Size of array: %i\n", sum); 
     
     
+
+
     
     
     clock_t executionEnd = clock();
