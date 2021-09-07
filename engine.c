@@ -183,7 +183,7 @@ int calcKingMoves(Move **kingList, Square origin_sq, GameState *gs){
     return moveCount;
 }
 
-int calcSlidingMoves(Move **slidingList, Square origin_sq, GameState *gs){
+int calcRookMoves(Move **slidingList, Square origin_sq, GameState *gs){
     /* Params:
         - **slidingList: double pointer to list of sliding moves: should be initialized as null
         - origin_sq: Initial square of move
@@ -210,7 +210,7 @@ int calcSlidingMoves(Move **slidingList, Square origin_sq, GameState *gs){
     
     // Remove capturs of own pieces and add attackMoves to a separate list:
     BitBoard horizontalAttacks;
-    BitBoard horizontalBoard = slidingMoves[origin_sq][occNum];
+    BitBoard horizontalBoard = rookMoves[origin_sq][occNum];
     //printBitBoard(&horizontalBoard, 0);
     if (gs->whiteToMove){
         horizontalAttacks = horizontalBoard & gs->boards[bPieces];
@@ -228,7 +228,7 @@ int calcSlidingMoves(Move **slidingList, Square origin_sq, GameState *gs){
     
     Square rot_sq = 8 * file + rank;
     int vert_occNum = 255 & (gs->rot_boards[aPieces] >> (8 * file));
-    BitBoard verticalBoard = slidingMoves[rot_sq][vert_occNum];
+    BitBoard verticalBoard = rookMoves[rot_sq][vert_occNum];
     BitBoard verticalAttacks;
     
     //printBitBoard(&verticalBoard, 0);
@@ -306,13 +306,19 @@ int calcDiagMoves(Move **diagList, Square origin_sq, GameState *gs){
     BitBoard moveBoard = 0ULL;
     
     // Calculate Occupancy Number for Diagonal
-    BitBoard occBoard = gs->rot_boards[aPieces]; 
+    BitBoard occBoard = gs->diag_boards[aPieces];
+    //printBitBoard(&occBoard, 0);
+    
+    int diagSize = (1 << (diagonalSizes[origin_sq]+1)) - 1;
+    occBoard = (occBoard >> diagShift[origin_sq]) & diagSize;
+    printBitBoard(&occBoard, 0);
     
     // Get moves for given square and occNum
-    
+    BitBoard testMoves = rookMoves[norm_to_diag[origin_sq]][occBoard];
+    printBitBoard(&testMoves, 0);
     
     // Calculate Occupancy Number for Anti-diagonal
     
-    
+
     return 0; 
 }

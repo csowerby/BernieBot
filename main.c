@@ -65,6 +65,8 @@ void moveInput(void){
  * BISHOP anti-diagonal:
  "b7/1b6/2b5/3b4/4b3/5b2/6b1/7b w - - 0 1"
  
+ * black Pieces on diagonals:
+ "3n3b/2n3b1/1n3b2/n3b3/3b3q/2b3q1/1b3q2/b3q3 w - - 0 1"
  
  * Square of various pieces:
  8/2RRRRR1/2P3P1/2P3P1/2bbbbb1/8/8/8 w - - 0 1
@@ -80,18 +82,21 @@ void moveInput(void){
 
 int main(void) {
     clock_t executionStart = clock();
-
+    /*
     init();
     GameState gs;
-
-    init_GameState(&gs, "8/2RRRRR1/2P3P1/2P3P1/2bbbbb1/8/8/8 w - - 0 1");
-    //init_GameState(&gs, NULL);
+    init_GameState(&gs, "3n3b/2n3b1/1n3b2/n3b3/3b3q/2b3q1/1b3q2/b3q3 w - - 0 1");
     printGameStateInfo(&gs, false);
+    */
+    
+
+    
+    
+    
+    
     
     
     clock_t executionEnd = clock();
-
-    
     double elapsedTime = (double) (executionEnd - executionStart)/ CLOCKS_PER_SEC;
     printf("Execution finished in %f seconds.\n", elapsedTime);
     return 0;

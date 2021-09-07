@@ -64,23 +64,30 @@ typedef uint8_t Square;
 /* ---------- GLOBAL VARIABLES --------- */
 extern BitBoard knightMoves[64];
 extern BitBoard kingMoves[64];
-extern BitBoard slidingMoves[64][256];
+extern BitBoard rookMoves[64][256];
+extern BitBoard bishopMoves[64][256]; 
 extern uint64_t zobristTable[64][12];
 extern BitBoard pawnCaptures[64][2];
 extern uint8_t diagonalSizes[64]; 
 extern uint8_t aDiagonalSizes[64]; 
 extern const char *chessPieces[13];
 
-// BitBoard Rotations
-static const Square norm_to_diag[64] = {36, 28, 19, 9, 14, 2, 5, 7, 45, 37, 29, 20, 10, 15, 3, 6, 55, 46, 38, 30, 21, 11, 0, 4, 50, 40, 47, 39, 31, 22, 12, 1, 62, 51, 41, 32, 24, 16, 23, 13, 59, 63, 52, 42, 33, 25, 17, 8, 57, 60, 48, 53, 43, 34, 26, 18, 56, 58, 61, 49, 54, 44, 35, 27};
 
-static const Square diag_to_norm[64] = {10, 3, 16, 9, 2, 8, 1, 0, 5, 32, 25, 18, 11, 4, 24, 17, 20, 13, 6, 40, 33, 26, 19, 12, 28, 21, 14, 7, 48, 41, 34, 27, 36, 29, 22, 15, 56, 49, 42, 35, 51, 44, 37, 30, 23, 57, 50, 43, 46, 39, 59, 52, 45, 38, 31, 58, 63, 62, 55, 61, 54, 47, 60, 53};
+
+/* BitBoard Rotations:
+  -Position zero represents the least significant bit of the bitboard and the square a1
+  - (index of square on normalbitboard) = diag_to_norm[(index of square in diagonalbitboard)]
+ */
+static const Square norm_to_diag[64] ={28, 21, 15, 10, 6, 3, 1, 0, 36, 29, 22, 16, 11, 7, 4, 2, 43, 37, 30, 23, 17, 12, 8, 5, 49, 44, 38, 31, 24, 18, 13, 9, 54, 50, 45, 39, 32, 25, 19, 14, 58, 55, 51, 46, 40, 33, 26, 20, 61, 59, 56, 52, 47, 41, 34, 27, 63, 62, 60, 57, 53, 48, 42, 35};
+
+static const Square diag_to_norm[64] = {7, 6, 15, 5, 14, 23, 4, 13, 22, 31, 3, 12, 21, 30, 39, 2, 11, 20, 29, 38, 47, 1, 10, 19, 28, 37, 46, 55, 0, 9, 18, 27, 36, 45, 54, 63, 8, 17, 26, 35, 44, 53, 62, 16, 25, 34, 43, 52, 61, 24, 33, 42, 51, 60, 32, 41, 50, 59, 40, 49, 58, 48, 57, 56};
 
 static const Square norm_to_adiag[64] = {7, 6, 4, 1, 13, 8, 18, 27, 5, 3, 0, 12, 23, 17, 26, 35, 2, 15, 11, 22, 16, 25, 34, 44, 14, 10, 21, 31, 24, 33, 43, 54, 9, 20, 30, 39, 32, 42, 53, 49, 19, 29, 38, 47, 41, 52, 48, 61, 28, 37, 46, 40, 51, 63, 60, 58, 36, 45, 55, 50, 62, 59, 57, 56};
 
 static const Square adiag_to_norm[64] = {10, 3, 16, 9, 2, 8, 1, 0, 5, 32, 25, 18, 11, 4, 24, 17, 20, 13, 6, 40, 33, 26, 19, 12, 28, 21, 14, 7, 48, 41, 34, 27, 36, 29, 22, 15, 56, 49, 42, 35, 51, 44, 37, 30, 23, 57, 50, 43, 46, 39, 59, 52, 45, 38, 31, 58, 63, 62, 55, 61, 54, 47, 60, 53};
 
-
+// Indexed in normal coordinates
+static const uint8_t diagShift[64] = {28, 21, 15, 10, 6, 3, 1, 0, 36, 28, 21, 15, 10, 6, 3, 1, 43, 36, 28, 21, 15, 10, 6, 3, 49, 43, 36, 28, 21, 15, 10, 6, 54, 49, 43, 36, 28, 21, 15, 10, 58, 54, 49, 43, 36, 28, 21, 15, 61, 58, 54, 49, 43, 36, 28, 21, 63, 61, 58, 54, 49, 43, 36, 28};
 
 
 /* ------------ DEFAULT METHODS --------*/
@@ -95,7 +102,7 @@ int fenCharToNum(char fChar);
 
 void preCalcKnightMoves(BitBoard knightMoves[64]);
 void preCalcKingMoves(BitBoard kingMoves[64]);
-void preCalcSlidingMoves(BitBoard rankMoves[64][256]);
+void preCalcRookMoves(BitBoard rankMoves[64][256]);
 void preCalcPawnCaptures(BitBoard pawnCaptures[64][2]);
 void preCalcBishopDiagonalSizes(uint8_t bishopDiagonals[64]);
 void preCalcBishopADiagonalSizes(uint8_t aBishopDiagonals[64]);

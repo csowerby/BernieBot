@@ -17,7 +17,7 @@ int badEvaluation(GameState *gs);
 int moveGen(Move **moveList, GameState *gs);
 int calcKingMoves(Move **kingList, Square origin_sq, GameState *gs);
 int calcKnightMoves(Move **kingList, Square origin_sq, GameState *gs);
-int calcSlidingMoves(Move **slidingList, Square origin_sq, GameState *gs);
+int calcRookMoves(Move **slidingList, Square origin_sq, GameState *gs);
 int calcDiagMoves(Move **diagList, Square origin_sq, GameState *gs);
 
 #endif /* engine_h */

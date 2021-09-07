@@ -15,12 +15,18 @@
 
 BitBoard knightMoves[64] = {0};
 BitBoard kingMoves[64] = {0};
-BitBoard slidingMoves[64][256] = {0};
+
+
+BitBoard rookMoves[64][256] = {0};
+BitBoard bishopMoves[64][256] = {0};
+
+
 BitBoard pawnCaptures[64][2] = {0};
 uint64_t zobristTable[64][12] = {0};
 
 uint8_t diagonalSizes[64];
-uint8_t aDiagonalSizes[64]; 
+uint8_t aDiagonalSizes[64];
+
 const char *chessPieces[13] = {"\u2659","\u2658","\u2657","\u2656"," \u2655","\u2654","\u265F","\u265E","\u265D","\u265C","\u265B","\u265A", " "};
 
 
@@ -264,7 +270,7 @@ void preCalcKingMoves(BitBoard kingMoves[64]){
 }
 
 
-void preCalcSlidingMoves(BitBoard rankMoves[64][256]){
+void preCalcRookMoves(BitBoard rankMoves[64][256]){
     // Rankmoves in indexed by rankMoves[square][occNum]
     for (int square = 0; square < 64; square++){
         for (int occNum = 0; occNum < 256; occNum++){
@@ -291,6 +297,10 @@ void preCalcSlidingMoves(BitBoard rankMoves[64][256]){
         }
         
     }
+}
+
+void preCalcBishopMoves(BitBoard bishopMoves[64][256]){
+    
 }
 
 void preCalcPawnCaptures(BitBoard pawnCaptures[64][2]){
@@ -324,6 +334,7 @@ void preCalcBishopDiagonals(uint8_t bishopDiagonals[64]){
         int file = i %8;
         
         bishopDiagonals[i] = (uint8_t) 7 - abs(rank - file);
+        
     }
 }
 
@@ -355,7 +366,7 @@ void init(){
     printf("Precalculating King Move Tables...\n");
     preCalcKingMoves(kingMoves);
     printf("Precalculating Rank Move Tables...\n");
-    preCalcSlidingMoves(slidingMoves);
+    preCalcRookMoves(rookMoves);
     printf("Precalculating Pawn Capture Tables...\n");
     preCalcPawnCaptures(pawnCaptures);
     printf("Precalculating Diagonal Sizes...\n");
