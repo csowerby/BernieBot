@@ -13,15 +13,10 @@
 #include <stdio.h>
 
 /* ------------------ */
-int init_magics(); 
+
 
 /* ------------------*/
-typedef struct{
-    BitBoard *attackPtr;
-    BitBoard mask;
-    uint64_t magic;
-    int shift;
-}sMagic;
+
 
 /* ------------------- */
 static int RBits[64] = {
@@ -115,7 +110,7 @@ static const uint64_t RMagic[64] = {
   0x4000882304000041ULL,
 };
 
-const uint64_t BMagic[64] = {
+static const uint64_t BMagic[64] = {
   0x100420000431024ULL,
   0x280800101073404ULL,
   0x42000a00840802ULL,

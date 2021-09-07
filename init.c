@@ -27,6 +27,10 @@ uint64_t zobristTable[64][12] = {0};
 uint8_t diagonalSizes[64];
 uint8_t aDiagonalSizes[64];
 
+// Magics
+sMagic rookMagics[64];
+sMagic bishopMagics[64];
+
 const char *chessPieces[13] = {"\u2659","\u2658","\u2657","\u2656"," \u2655","\u2654","\u265F","\u265E","\u265D","\u265C","\u265B","\u265A", " "};
 
 
@@ -354,6 +358,55 @@ void initZobrist(uint64_t zobristTable[64][12] ){
 }
 
 
+// MAGIC SHIT
+
+int generateRookMasks(BitBoard rookMasks[64]){
+    for(int i = 0; i < 64; i++){
+        int rank = i/8;
+        int file = i%8;
+        
+        for (int j = 1; rank + j < 7; j++){
+            setBit(&rookMasks[i], i + 8*j);
+        }
+        for (int j = -1; rank + j >= 1; j--){
+            setBit(&rookMasks[i], i + 8*j);
+        }
+        for (int j = 1; file + j < 7; j++){
+            setBit(&rookMasks[i], i + j);
+        }
+        for (int j = -1; file + j >= 1; j--){
+            setBit(&rookMasks[i], i + j);
+        }
+    }
+    return 0;
+}
+
+int generateBishopMasks(BitBoard bishopMasks[64]){
+    for(int i = 0; i < 64; i++){
+        int rank = i/8;
+        int file = i%8;
+        
+        for (int j = 1; j + rank < 7 && j + file < 7; j++){
+            setBit(&bishopMasks[i], i + 9*j);
+        }
+        for (int j = 1; rank - j >= 1 && j + file < 7; j++){
+            setBit(&bishopMasks[i], i - 7*j);
+        }
+        for (int j = 1; j + rank < 7 && file - j >= 1; j++){
+            setBit(&bishopMasks[i], i + 7*j);
+        }
+        for (int j = 1; rank - j >= 1 && file - j >= 1; j++){
+            setBit(&bishopMasks[i], i - 9*j);
+        }
+    }
+    return 0;
+}
+
+void init_magics(sMagic rookMagics[64], sMagic bishopMagics[64]){
+    
+}
+
+
 
 
 
@@ -373,7 +426,7 @@ void init(){
     preCalcBishopDiagonals(diagonalSizes);
     preCalcBishopADiagonalSizes(aDiagonalSizes);
     initZobrist(zobristTable);
-    
+    init_magics(rookMagics, bishopMagics); 
     
     
 }

@@ -61,6 +61,17 @@ typedef uint64_t BitBoard;
 typedef uint16_t Move;
 typedef uint8_t Square; 
 
+
+/* ------------ MAGIC BITBOARDS --------------- */
+
+typedef struct{
+    BitBoard *attackPtr;
+    BitBoard mask;
+    uint64_t magic;
+    int shift;
+}sMagic;
+
+
 /* ---------- GLOBAL VARIABLES --------- */
 extern BitBoard knightMoves[64];
 extern BitBoard kingMoves[64];
@@ -72,6 +83,8 @@ extern uint8_t diagonalSizes[64];
 extern uint8_t aDiagonalSizes[64]; 
 extern const char *chessPieces[13];
 
+extern sMagic rookMagics[64];
+extern sMagic bishopMagics[64]; 
 
 
 /* BitBoard Rotations:
@@ -97,6 +110,13 @@ int square_coords_to_num(int rank, char file);
 char pieceNumToChar(int num);
 int fenCharToNum(char fChar);
 
+/* ------ BITBOARD METHODS --------*/
+
+void setBit(BitBoard *board, int bitPos);
+void clearBit(BitBoard *board, int bitPos);
+bool getBit(BitBoard *board, int bitPos);
+uint8_t get_ls1b_pos(BitBoard *board);
+
 /* ----------- INITIALIZATION METHODS ------- */
 
 
@@ -108,10 +128,11 @@ void preCalcBishopDiagonalSizes(uint8_t bishopDiagonals[64]);
 void preCalcBishopADiagonalSizes(uint8_t aBishopDiagonals[64]);
 void initZobrist(uint64_t zobrist_table[64][12] );
 
+void init_magics(sMagic rookMagics[64], sMagic bishopMagics[64]);
+
 void init(void);
 
 
 
- 
  
 #endif /* BernieBot_h */

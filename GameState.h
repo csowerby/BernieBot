@@ -15,12 +15,7 @@
 
 
 
-/* ------ BITBOARD METHODS --------*/
 
-void setBit(BitBoard *board, int bitPos);
-void clearBit(BitBoard *board, int bitPos);
-bool getBit(BitBoard *board, int bitPos);
-uint8_t get_ls1b_pos(BitBoard *board);
 
 
 
