@@ -190,7 +190,7 @@ int calcRookMoves(Move **slidingList, Square origin_sq, GameState *gs){
         - *gs: pointer to gamestate we'd like to calculate moves with
      
      Returns:
-        - integer length of kingList
+        - integer length of moveList
      */
     
     // Allocate 14 Moves worth of memory because its the maximum move capacity
@@ -198,15 +198,10 @@ int calcRookMoves(Move **slidingList, Square origin_sq, GameState *gs){
     int moveCount = 0;
     
     BitBoard occ = gs->boards[aPieces];
-    printBitBoard(&occ, 0);
     occ &= rookMagics[origin_sq].mask;
-    printBitBoard(&occ, 0);
     occ *= rookMagics[origin_sq].magic;
-    printBitBoard(&occ, 0);
-    occ >>= rookMagics[origin_sq].shift; 
-    printBitBoard(&occ, 0);
+    occ >>= rookMagics[origin_sq].shift;
     BitBoard moves = rookMagics[origin_sq].attackPtr[occ];
-    printBitBoard(&moves, 0);
     
     BitBoard attacks;
     // Remove captures of our own pieces and let attacks be a separate board
@@ -245,9 +240,51 @@ int calcRookMoves(Move **slidingList, Square origin_sq, GameState *gs){
     return moveCount;
 }
 
-int calcDiagMoves(Move **diagList, Square origin_sq, GameState *gs){
-    
-    
-
-    return 0; 
+int calcBishopMoves(Move **diagList, Square origin_sq, GameState *gs){
+    // Allocate 13 Moves worth of memory because its the maximum move capacity
+    Move* moveList = (Move*)malloc(13* sizeof(Move));
+    int moveCount = 0;
+        
+    BitBoard occ = gs->boards[aPieces];
+    occ &= bishopMagics[origin_sq].mask;
+    occ *= bishopMagics[origin_sq].magic;
+    occ >>= bishopMagics[origin_sq].shift;
+    BitBoard moves = bishopMagics[origin_sq].attackPtr[occ];
+    printBitBoard(&moves, 0);
+        
+    BitBoard attacks;
+        // Remove captures of our own pieces and let attacks be a separate board
+    if (gs->whiteToMove){
+        attacks = moves & gs->boards[bPieces];
+        moves &= ~(gs->boards[aPieces]);
+    }else{
+        attacks = moves & gs->boards[wPieces];
+        moves &= ~(gs->boards[aPieces]);
+    }
+    Square targetSquare;
+    while(attacks){
+        // Append Attacks
+        moveList[moveCount] = 0;
+        targetSquare = get_ls1b_pos(&attacks);
+        clearBit(&attacks, targetSquare);
+        moveList[moveCount] += targetSquare << 4;
+        moveList[moveCount] += origin_sq << 10;
+        // Append set 4digit code to 0100 because capture.
+        moveList[moveCount] += 4;
+        moveCount++;
+    }
+    while(moves){
+        //append quietmoves
+        moveList[moveCount] = 0;
+        targetSquare = get_ls1b_pos(&moves);
+        clearBit(&moves, targetSquare);
+        moveList[moveCount] += targetSquare << 4;
+        moveList[moveCount] += origin_sq << 10;
+        moveCount++;
+    }
+        
+        
+    moveList = (Move*) realloc(moveList, moveCount * sizeof(Move));
+    *diagList = moveList;
+    return moveCount;
 }

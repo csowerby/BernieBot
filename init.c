@@ -489,10 +489,10 @@ void init_attacks(BitBoard attacks[ATTACK_LENGTH]){
         //printf("Starting bishop square: %i\n", i);
         BitBoard blockers2[8192] = {0ULL};
         int rank = i/8;
-        int file = i&8;
+        int file = i % 8;
         
         // Calculate list of squares that are accesible by this bishop.
-        Square sqList[13] = {no_sqr};
+        Square sqList[13] = {no_sqr, no_sqr,no_sqr,no_sqr,no_sqr,no_sqr,no_sqr,no_sqr,no_sqr,no_sqr,no_sqr,no_sqr,no_sqr,};
         int index = 0;
         for(int r = rank+1, f = file+1; r <= 7 && f <= 7; r++, f++) {
             sqList[index] = 8 * r + f;
@@ -525,7 +525,7 @@ void init_attacks(BitBoard attacks[ATTACK_LENGTH]){
             BitBoard occ = bishopMagics[i].mask & blockers2[j];
             occ *= bishopMagics[i].magic;
             occ >>= bishopMagics[i].shift;
-            bishopMagics[i].attackPtr[occ] = genRookAttacks(i, blockers2[j]);
+            bishopMagics[i].attackPtr[occ] = genBishopAttacks(i, blockers2[j]);
         }
         
 
