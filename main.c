@@ -88,9 +88,20 @@ int main(void) {
     init();
     GameState gs;
     init_GameState(&gs, "3n3b/2n3b1/1n3b2/n3b3/3b3q/2b3q1/1b3q2/b3q3 w - - 0 1");
-    //printGameStateInfo(&gs, false);
+    printGameStateInfo(&gs, false);
+    /*
+    for (int i = 0; i < 10000; i++){
+        printf("%i\n",i);
+        printBitBoard(&rookMagics[d1].attackPtr[i], 0);
+    }
+    */
     
-    
+    Move *bishopList = NULL;
+    int numMoves = calcBishopMoves(&bishopList, d1, &gs);
+    for(int i = 0; i < numMoves; i++){
+        printMoveInfo(&bishopList[i]);
+    }
+
 
 
     

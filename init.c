@@ -391,6 +391,7 @@ void init_magics(sMagic rookMagics[64], sMagic bishopMagics[64], BitBoard attack
         // Shift
         bishopMagics[i].shift = 64 - BBits[i];
     }
+    //printf("Attack counter: %i", attackCounter); 
 }
 
 BitBoard genRookAttacks(Square current_sq, BitBoard blockers){
@@ -444,14 +445,13 @@ BitBoard genBishopAttacks(Square current_sq, BitBoard blockers){
 void init_attacks(BitBoard attacks[ATTACK_LENGTH]){
     // LOOP THROUGH ROOK SQUARES
     for (Square i = a1; i <= h8; i++){
-        printf("Starting rook square: %i\n", i);
+        //printf("Starting rook square: %i\n", i);
         
-        // Generate all Possible ROOK Blockers
+        // Generate all Possible ROOK Blockers for that square
         BitBoard blockers[16384] = {0ULL};
         int rank = i/8;
         int file = i%8;
-        
-        
+
         for(BitBoard j = 0; j < 16384; j++){
             int plus1 = 0;
             for(int k = 0; k < 7; k++){
@@ -475,21 +475,18 @@ void init_attacks(BitBoard attacks[ATTACK_LENGTH]){
             //printBitBoard(&blockers[j], 0);
         }
         
-        
+        // Fill rook attacks
         for (int j = 0; j < (16384); j++){
             BitBoard occ = rookMagics[i].mask & blockers[j];
             occ *= rookMagics[i].magic;
             occ >>= rookMagics[i].shift;
             rookMagics[i].attackPtr[occ] = genRookAttacks(i, blockers[j]);
         }
-
     }
     
     // LOOP THROUGH BISHOP SQUARES
-    
-
     for(Square i = a1; i <= h8; i++){
-        printf("Starting bishop square: %i\n", i);
+        //printf("Starting bishop square: %i\n", i);
         BitBoard blockers2[8192] = {0ULL};
         int rank = i/8;
         int file = i&8;
@@ -514,6 +511,7 @@ void init_attacks(BitBoard attacks[ATTACK_LENGTH]){
             index++;
         }
         
+        // Set array of all possible blockers for bishop moves
         for(BitBoard j = 0ULL; j < (1 << index); j++){
             for(int k = 0; k < index; k++){
                 if(getBit(&j, k)){
@@ -522,7 +520,7 @@ void init_attacks(BitBoard attacks[ATTACK_LENGTH]){
             }
             
         }
-        
+        //Fill bishop attacks
         for (int j = 0; j < (1 << index); j++){
             BitBoard occ = bishopMagics[i].mask & blockers2[j];
             occ *= bishopMagics[i].magic;
@@ -534,12 +532,6 @@ void init_attacks(BitBoard attacks[ATTACK_LENGTH]){
     }
 }
 
-BitBoard RookMoves(BitBoard Blockers, Square current_sq){
-    BitBoard occ = rookMagics[current_sq].mask & Blockers;
-    occ *= rookMagics[current_sq].magic;
-    occ >>= rookMagics[current_sq].shift;
-    return rookMagics[current_sq].attackPtr[occ];
-}
 
 
 
