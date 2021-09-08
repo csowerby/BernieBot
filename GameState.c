@@ -65,9 +65,9 @@ void init_GameState(GameState *gs, char *fen){
     // Initialize GameState from FEN
     if (fen == NULL){
         fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-        printf("Initializing Starting Position... \n");
+        printf("Initializing Starting Position... \n\n");
     }else{
-        printf("Initializing with FEN Inputted: %s\n", fen);
+        printf("Initializing with FEN Inputted: %s\n\n", fen);
     }
     
     // PARSING FEN
@@ -186,14 +186,14 @@ void init_GameState(GameState *gs, char *fen){
     
     
     for(; fen[i] != ' '; i++){
-        printf("50 Move Ply Character Registered! %c\n", fen[i]);
+        //printf("50 Move Ply Character Registered! %c\n", fen[i]);
         gs-> fiftyMovePly = 10 * gs->fiftyMovePly + (fen[i] - '0');
     }
     i++;
     // Update the gamemove number
     int gameMove = 0;
     for(; fen[i] != '\0'; i++){
-        printf("GameMove Num Character Registered! %c\n", fen[i]);
+        //printf("GameMove Num Character Registered! %c\n", fen[i]);
         gameMove = 10 * gameMove + (fen[i] - '0');
     }
     int ply = (gameMove-1) * 2;

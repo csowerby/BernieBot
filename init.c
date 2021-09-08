@@ -444,15 +444,15 @@ BitBoard genBishopAttacks(Square current_sq, BitBoard blockers){
 void init_attacks(BitBoard attacks[ATTACK_LENGTH]){
     // LOOP THROUGH ROOK SQUARES
     for (Square i = a1; i <= h8; i++){
-        printf("Starting square: %i\n\n", i);
+        printf("Starting rook square: %i\n", i);
         
         // Generate all Possible ROOK Blockers
-        BitBoard blockers[8192] = {0ULL};
+        BitBoard blockers[16384] = {0ULL};
         int rank = i/8;
         int file = i%8;
         
         
-        for(BitBoard j = 0; j < 8192; j++){
+        for(BitBoard j = 0; j < 16384; j++){
             int plus1 = 0;
             for(int k = 0; k < 7; k++){
                 if (k == rank){
@@ -476,7 +476,7 @@ void init_attacks(BitBoard attacks[ATTACK_LENGTH]){
         }
         
         
-        for (int j = 0; j < (1 << 13); j++){
+        for (int j = 0; j < (16384); j++){
             BitBoard occ = rookMagics[i].mask & blockers[j];
             occ *= rookMagics[i].magic;
             occ >>= rookMagics[i].shift;
@@ -486,15 +486,49 @@ void init_attacks(BitBoard attacks[ATTACK_LENGTH]){
     }
     
     // LOOP THROUGH BISHOP SQUARES
-    BitBoard blockers2[8192] = {0xFFFFFFFFFFFFFFFFULL};
-    int blockerCounter = 0;
-    int toBreak = 0;
+    
+
     for(Square i = a1; i <= h8; i++){
+        printf("Starting bishop square: %i\n", i);
+        BitBoard blockers2[8192] = {0ULL};
         int rank = i/8;
         int file = i&8;
         
-        // Calculate all blockers for this square
-        //TODO: - 
+        // Calculate list of squares that are accesible by this bishop.
+        Square sqList[13] = {no_sqr};
+        int index = 0;
+        for(int r = rank+1, f = file+1; r <= 7 && f <= 7; r++, f++) {
+            sqList[index] = 8 * r + f;
+            index++;
+        }
+        for(int r = rank-1, f = file-1; r >= 0 && f >= 0; r--, f--) {
+            sqList[index] = 8 * r + f;
+            index++;
+        }
+        for(int r = rank+1, f = file-1; r <= 7 && f >= 0; r++, f--) {
+            sqList[index] = 8 * r + f;
+            index++;
+        }
+        for(int r = rank-1, f = file+1; r >= 0 && f <= 7; r--, f++) {
+            sqList[index] = 8 * r + f;
+            index++;
+        }
+        
+        for(BitBoard j = 0ULL; j < (1 << index); j++){
+            for(int k = 0; k < index; k++){
+                if(getBit(&j, k)){
+                    setBit(&blockers2[j], sqList[k]);
+                }
+            }
+            
+        }
+        
+        for (int j = 0; j < (1 << index); j++){
+            BitBoard occ = bishopMagics[i].mask & blockers2[j];
+            occ *= bishopMagics[i].magic;
+            occ >>= bishopMagics[i].shift;
+            bishopMagics[i].attackPtr[occ] = genRookAttacks(i, blockers2[j]);
+        }
         
 
     }
