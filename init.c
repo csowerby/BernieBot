@@ -271,29 +271,6 @@ void preCalcKingMoves(BitBoard kingMoves[64]){
 
 
 
-void preCalcPawnCaptures(BitBoard pawnCaptures[64][2]){
-    // Indexed by square and pawn color. WHITE = 0, BLACK = 1.
-    for(int i = 0; i < 64; i++){
-        int file = i % 8;
-        int rank = i/8;
-        if (file != 0){
-            if (rank != 0){
-                setBit(&pawnCaptures[i][1], i-9);
-            }
-            if(rank !=7){
-                setBit(&pawnCaptures[i][0], i + 7);
-            }
-        }
-        if (file != 7){
-            if (rank != 0){
-                setBit(&pawnCaptures[i][1], i - 7);
-            }
-            if(rank !=7){
-                setBit(&pawnCaptures[i][0], i + 9);
-            }
-        }
-    }
-}
 
 
 
@@ -543,7 +520,6 @@ void init(){
 
     preCalcKnightMoves(knightMoves);
     preCalcKingMoves(kingMoves);
-    preCalcPawnCaptures(pawnCaptures);
     initZobrist(zobristTable);
     init_magics(rookMagics, bishopMagics, attacks);
     

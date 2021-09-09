@@ -57,7 +57,7 @@ int updateGameState(GameState *gs, Move*move);
 /* ------ METHODS FOR PRINTING GAMESTATE -------*/
 void printGameStateInfo(GameState *gs, bool printBitBoards);
 void printGameBoard(GameState *gs);
-void printBitBoard(BitBoard *bBoard, int nBitBoard);
+void printBitBoard(BitBoard *bBoard);
 
 
 

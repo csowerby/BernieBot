@@ -26,15 +26,16 @@ void moveInput(void){
 
  
  Next:
+    
+ * Implement rest of movegen
+    * pawn Moves
+    * pawn cap + enPassant
+    * promo
+    * castling
  
- * MAGIC BITBOARDS!!!
-    -working on magic bitboards, need to generate blockers for bishop moves in init file 
+ * Implement make/unmake move
  
- * Implement the rest of the moveGen functions
-    * Sliding pieces (diagonal too)
-    *
- 
- * Implement move checking?
+ * Implement move checking
     * Bitboards for attacking pieces?
     * vector attacks?
  
@@ -57,7 +58,10 @@ void moveInput(void){
 
 /* DEBUGGING FEN LIST:
  
- * Starting position
+ *starting position fen
+ "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+ 
+ * Wack position
  "r1bq1bnr/p1p2ppp/3pk3/4p3/2Q1P3/5N2/PPPP1PPP/RNB2RK1 b - - 0 9"
  
  * BISHOP anti-diagonal:
@@ -87,18 +91,15 @@ int main(void) {
     
     init();
     GameState gs;
-    init_GameState(&gs, "3n3b/2n3b1/1n3b2/n3b3/3b3q/2b3q1/1b3q2/b3q3 w - - 0 1");
+    init_GameState(&gs,  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     printGameStateInfo(&gs, false);
-
     
-    Move *bishopList = NULL;
-    int numMoves = calcBishopMoves(&bishopList, c6, &gs);
+    
+    Move *moveList = NULL;
+    int numMoves = calcPawnMoves(&moveList, &gs);
     for(int i = 0; i < numMoves; i++){
-        printMoveInfo(&bishopList[i]);
+        printMoveInfo(&moveList[i]);
     }
-
-
-
     
     
     clock_t executionEnd = clock();

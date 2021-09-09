@@ -28,6 +28,33 @@
 
 #define ATTACK_LENGTH 107648
 
+
+#define rank1 0x00000000000000FFULL
+#define rank2 0x000000000000FF00ULL
+#define rank3 0x0000000000FF0000ULL
+#define rank4 0x00000000FF000000ULL
+#define rank5 0x000000FF00000000ULL
+#define rank6 0x0000FF0000000000ULL
+#define rank7 0x00FF000000000000ULL
+#define rank8 0xFF00000000000000ULL
+
+#define notRank8 0x00FFFFFFFFFFFFFFULL
+#define notRank1 0xFFFFFFFFFFFFFF00ULL
+
+#define aFile 0x0101010101010101ULL
+#define bFile 0x0202020202020202ULL
+#define cFile 0x0404040404040404ULL
+#define dFile 0x0808080808080808ULL
+#define eFile 0x1010101010101010ULL
+#define fFile 0x2020202020202020ULL
+#define gFile 0x4040404040404040ULL
+#define hFile 0x8080808080808080ULL
+
+#define notAFile 0xFEFEFEFEFEFEFEFEULL
+#define notHFile 0x7F7F7F7F7F7F7F7FULL
+
+
+
 /* ----- deBrujin lookup stuff ------- */
 #define debrujin64 0x022fdd63cc95386dULL
 static const uint8_t DeBruijnBitPosition[64] = {0,
@@ -60,8 +87,7 @@ enum bitboards {wPawns, bPawns, wPieces, bPieces, aPieces};
 /* ------ DECLARATIONS --------*/
 typedef uint64_t BitBoard;
 typedef uint16_t Move;
-typedef uint8_t Square; 
-
+typedef uint8_t Square;
 
 /* ------------ MAGIC STRUCT --------------- */
 
@@ -78,7 +104,6 @@ extern BitBoard knightMoves[64];
 extern BitBoard kingMoves[64];
 
 extern uint64_t zobristTable[64][12];
-extern BitBoard pawnCaptures[64][2];
 
 extern const char *chessPieces[13];
 
@@ -107,7 +132,7 @@ uint8_t get_ls1b_pos(BitBoard *board);
 
 void preCalcKnightMoves(BitBoard knightMoves[64]);
 void preCalcKingMoves(BitBoard kingMoves[64]);
-void preCalcPawnCaptures(BitBoard pawnCaptures[64][2]);
+
 void initZobrist(uint64_t zobrist_table[64][12] );
 void init_magics(sMagic rookMagics[64], sMagic bishopMagics[64], BitBoard attacks[ATTACK_LENGTH]);
 BitBoard genBishopAttacks(Square current_sq, BitBoard blockers);

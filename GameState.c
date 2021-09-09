@@ -250,7 +250,7 @@ void printGameStateInfo(GameState *gs, bool printBitBoards){
         printf("\n -- GAMESTATE INFO -- \n\n");
         printf("BitBoards: (wPawns, bPawns, wPieces, bPieces, aPieces, wAttacks, bAttacks)...\n");
         for (int i = 0; i < NUM_BOARDS; i++){
-            printBitBoard(gs->boards, i);
+            printBitBoard(gs->boards + i);
         }
     }
     
@@ -305,11 +305,11 @@ void printGameBoard(GameState *gs){
     printf("%s", top_bot_string);
 }
 
-void printBitBoard(BitBoard* bBoard, int nBitBoard){
-    // Print out bitboard in array bBoard with index nBitBoard.
+void printBitBoard(BitBoard* bBoard){
+    // Print out bitboard
     for (int rank = 7; rank >= 0; rank--){
         for (int file = 0; file < 8; file ++){
-            printf("%i ", getBit((bBoard + nBitBoard), 8 * rank + file));
+            printf("%i ", getBit(bBoard, 8 * rank + file));
         }
         printf("\n");
     }
