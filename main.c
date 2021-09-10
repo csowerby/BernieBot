@@ -28,18 +28,24 @@ void moveInput(void){
  Next:
     
  * Implement final function for move generation!
+    * Castling 
+    * Generate all PL move
  
  * Implement make/unmake move
+    * Use XOR to update bitboards https://www.chessprogramming.org/General_Setwise_Operations#UpdateByMove
+    * Check Legality of Move immediately after making move
+    * Must not be in check immediately after move is made
+        * if in check after all PL moves, then you're in mate... darn.
  
- * Switch data type to all bitboards?
  
- * Implement function to check legality of PL moves.
+ * Implement function to check legality of PL moves?
     
  
  * Implement minimax
  * implement ab pruning
  * Implement different moveGen that separates quiet moves and attacks?
  
+ * Conider writing pop_ls1b funcntion using better bit-twiddling to reset bit (might save an instruction)
 
   * Zobrist hashing not super important -> implement for transposition table.
   * Move history? Is this necessary? 
@@ -84,10 +90,17 @@ int main(void) {
     GameState gs;
     init_GameState(&gs,  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
+
     
+    //printGameStateInfo(&gs, true);
     
+    Move* moveList = NULL;
+    int numMoves = moveGen(&moveList, &gs);
     
-    printGameStateInfo(&gs, true);
+    printf("NUMBER OF MOVES: %i\n", numMoves);
+    for(int i = 0; i < numMoves; i++){
+        printMoveInfo(&moveList[i]); 
+    }
     
     clock_t executionEnd = clock();
     double elapsedTime = (double) (executionEnd - executionStart)/ CLOCKS_PER_SEC;

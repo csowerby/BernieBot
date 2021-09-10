@@ -196,10 +196,10 @@ void init_GameState(GameState *gs, char *fen){
 }
 
 
+/* --------------------------   MOVE MAKING METHODS  ------------------------ */
 
 
-
-int updateGameState(GameState *gs, Move *move){
+int makeMove(GameState *gs, Move *move){
     /* Update gamestate with the code :
         * 6 bits origin square
         * 6 bits target square

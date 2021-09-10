@@ -34,10 +34,9 @@ int badEvaluation(GameState *gs){
 
 /* -------------- TEST IF IN CHECK -------------------- */
 
-int inCheck(GameState* gs){
+int inCheck(Square kingPos, GameState* gs){
     if(gs->whiteToMove){
         // White To Move
-        Square kingPos = get_ls1b_pos(&gs->boards[wKings]);
         
         // Rooks and Queens
         if(getRookMoveBoard(kingPos, gs) & (gs->boards[bRooks] | gs->boards[bQueens])){
@@ -65,7 +64,6 @@ int inCheck(GameState* gs){
         return 0;
     }else{
         // Black To Move
-        Square kingPos = get_ls1b_pos(&gs->boards[bKings]);
         
         // Rooks and Queens
         if(getRookMoveBoard(kingPos, gs) & (gs->boards[wRooks] | gs->boards[wQueens])){
@@ -105,37 +103,170 @@ int moveGen(Move **totalMoveList, GameState *gs){
      NOTE- ONE TRY COULD BE TO RETURN -1 IF CAPTURE OF KING IS A LEGAL MOVE, i.e. the last move was illegal and we need to unmake the last move
      */
 
-    int numMoves = 0;
+    int moveCount = 0;
     Move *moveList;
     moveList = malloc(218 * sizeof(Move));
-    
+
+    // CASTLING
+    /* Procedure for checkingn if castling is legal
+        - If you have castling rights
+        - If No pieces are in between
+        - If not in check
+        - If no squares in between are in check
+     */
     if(gs->whiteToMove){
-        if(getBit((BitBoard*)&gs->castlingPrivileges, 3)){
-            // Check if White Short Castle Legal
-            
-            // Check if Bishop, Rook, Knight, King, Pawn Move from g1, f1, intersect with the proper piece.
-            // Alternatively Check if king in check, or if g1, f1 are in check and the squares empty
-        }
-        if(getBit((BitBoard*)&gs->castlingPrivileges, 2)){
-            // Check if White Long Castle Legal
+        if(!inCheck(e1, gs)){
+            // Check if not in Check
+            if(getBit((BitBoard*)&gs->castlingPrivileges, 3)){
+                // Check if White Short Castling Privileges
+                if (!(w_short_castle_squares & gs->boards[aPieces])){
+                    // No Pieces in the way
+                    if(!inCheck(f1, gs)){
+                        if(!inCheck(g1, gs)){
+                            // Squares between aren't in check
+                            
+                            // Short Castling is available - append now
+                            moveList[moveCount] = 0;
+                            moveList[moveCount] += g1 << 4;
+                            moveList[moveCount] += e1 << 10;
+                            //Code for short Castle 0010
+                            moveList[moveCount] += 2;
+                            moveCount++;
+                        }
+                    }
+                }
+            }
+            if(getBit((BitBoard*)&gs->castlingPrivileges, 2)){
+                // Check if White Long Castling Privileges
+                if (!(w_long_castle_squares & gs->boards[aPieces])){
+                    // No Pieces in the way
+                    if(!inCheck(d1, gs)){
+                        if(!inCheck(c1, gs)){
+                            if(!inCheck(b1, gs)){
+                                // Squares between aren't in check
+                                
+                                // Long Castling is available - append now
+                                moveList[moveCount] = 0;
+                                moveList[moveCount] += c1 << 4;
+                                moveList[moveCount] += e1 << 10;
+                                //Code for long Castle 0011
+                                moveList[moveCount] += 3;
+                                moveCount++;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }else{
-        if(getBit((BitBoard*)&gs->castlingPrivileges, 2)){
-            // Check if Black Short Castle Legal
-        }
-        if(getBit((BitBoard*)&gs->castlingPrivileges, 1)){
-            // Check if Black Long Castle Legal
+        if(!inCheck(e8, gs)){
+            // Check if not in Check
+            if(getBit((BitBoard*)&gs->castlingPrivileges, 2)){
+                // Check if Black Short Castling Privileges
+                if (!(b_short_castle_squares & gs->boards[aPieces])){
+                    // No Pieces in the way
+                    if(!inCheck(f8, gs)){
+                        if(!inCheck(g8, gs)){
+                            // Squares between aren't in check
+                            
+                            // Short Castling is available - append now
+                            moveList[moveCount] = 0;
+                            moveList[moveCount] += g8 << 4;
+                            moveList[moveCount] += e8 << 10;
+                            //Code for short Castle 0010
+                            moveList[moveCount] += 2;
+                            moveCount++;
+                        }
+                    }
+                }
+            }
+            if(getBit((BitBoard*)&gs->castlingPrivileges, 1)){
+                // Check if Black Long Castling Privileges
+                if (!(b_long_castle_squares & gs->boards[aPieces])){
+                    // No Pieces in the way
+                    if(!inCheck(d8, gs)){
+                        if(!inCheck(c8, gs)){
+                            if(!inCheck(b8, gs)){
+                                // Squares between aren't in check
+                                
+                                // Long Castling is available - append now
+                                moveList[moveCount] = 0;
+                                moveList[moveCount] += c8 << 4;
+                                moveList[moveCount] += e8 << 10;
+                                //Code for long Castle 0011
+                                moveList[moveCount] += 3;
+                                moveCount++;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
     
+    // Append other moves
     
+    // Pawn Moves
+    Move *pawnMoves = NULL;
+    int numPawnMoves = calcPawnMoves(&pawnMoves, gs);
+    memcpy(moveList + moveCount, pawnMoves, numPawnMoves *sizeof(Move));
+    moveCount += numPawnMoves;
+    free(pawnMoves);
     
-    
+    int colorToMoveOffset = 6;
+    if(gs->whiteToMove){
+        colorToMoveOffset = 0;
+    }
 
-
+    //King Moves
+    Move *kingMoves = NULL;
+    int numKingMoves = calcKingMoves(&kingMoves,get_ls1b_pos(&gs->boards[wKings + colorToMoveOffset]), gs);
+    memcpy(moveList +moveCount, kingMoves, numKingMoves *sizeof(Move));
+    moveCount += numKingMoves;
+    free(kingMoves);
     
+    //Sliding Moves
+    BitBoard rookAndQueenPositions = gs->boards[wQueens+ colorToMoveOffset] | gs->boards[wRooks + colorToMoveOffset];
+    while(rookAndQueenPositions){
+        Square slidingPieceSquare = get_ls1b_pos(&rookAndQueenPositions);
+        clearBit(&rookAndQueenPositions, slidingPieceSquare);
+        
+        Move *slidingMoves = NULL;
+        int numSlidingMoves = calcRookMoves(&slidingMoves, slidingPieceSquare, gs);
+        memcpy(moveList + moveCount, slidingMoves, numSlidingMoves * sizeof(Move));
+        moveCount += numSlidingMoves;
+        free(slidingMoves);
+    }
     
-    return numMoves;
+    // Diagonal Moves
+    BitBoard bishopAndQueenPositions = gs->boards[wQueens + colorToMoveOffset] | gs->boards[wBishops + colorToMoveOffset];
+    while(bishopAndQueenPositions){
+        Square diagPieceSquare = get_ls1b_pos(&bishopAndQueenPositions);
+        clearBit(&bishopAndQueenPositions, diagPieceSquare);
+        
+        Move *diagMoves = NULL;
+        int numDiagMoves = calcBishopMoves(&diagMoves, diagPieceSquare, gs);
+        memcpy(moveList + moveCount, diagMoves, numDiagMoves * sizeof(Move));
+        moveCount += numDiagMoves;
+        free(diagMoves);
+    }
+    
+    //KnightMoves
+    BitBoard knightPositions = gs->boards[wKnights + colorToMoveOffset];
+    while(knightPositions){
+        Square knightSquare = get_ls1b_pos(&knightPositions);
+        clearBit(&knightPositions, knightSquare);
+        
+        Move *knightMoves = NULL;
+        int numKnightMoves = calcKnightMoves(&knightMoves, knightSquare, gs);
+        memcpy(moveList + moveCount, knightMoves, numKnightMoves * sizeof(Move));
+        moveCount += numKnightMoves;
+        free(knightMoves);
+    }
+    moveList = realloc(moveList, moveCount * sizeof(Move));
+    *totalMoveList = moveList;
+    
+    return moveCount;
 }
 
 
@@ -184,13 +315,15 @@ int calcKnightMoves(Move **knightList, Square origin_sq, GameState *gs){
         clearBit(&moveBoard, targetSquare);
         moveList[moveCount] += targetSquare << 4;
         moveList[moveCount] += origin_sq << 10;
+        
         // Check if capture, if so append 100 on the end
+        /* TODO: - THIS COULD BE DONE MUCH FASTER USING BITBOARDS NOT ONE AT A TIME - FIX THIS IN THE FUTURE */
         if (gs->whiteToMove){
-            if(getBit(&gs->boards[3], targetSquare)){
+            if(getBit(&gs->boards[bPieces], targetSquare)){
                 moveList[moveCount] += 4;
             }
         }else{
-            if(getBit(&gs->boards[2], targetSquare)){
+            if(getBit(&gs->boards[wPieces], targetSquare)){
                 moveList[moveCount] += 4;
             }
         }
