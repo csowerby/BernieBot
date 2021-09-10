@@ -24,7 +24,7 @@
 
 /* ------ DEFINITIONS ----------*/
 
-#define NUM_BOARDS 5 // -> Represents White Pawns, Black Pawns, All Pawns?, White Pieces, Black Pieces, All Pieces
+#define NUM_BOARDS 15 // -> Represents White Pawns, White Knights, White Bishops, White Rooks, White Queens, White King, All White Pieces, Black Pawns, Black Knights, Black Bishops, Black Rooks, Black Queens, Black King, All Black Pieces, All Pieces
 
 #define ATTACK_LENGTH 107648
 
@@ -82,7 +82,7 @@ enum {wP, wN, wB, wR, wQ, wK, bP, bN, bB, bR, bQ, bK, no_pce};
 enum {w_short_castle = 8, w_long_castle=4, b_short_castle=2, b_long_castle=1};
 
 // Bitboards
-enum bitboards {wPawns, bPawns, wPieces, bPieces, aPieces};
+enum bitboards {wPawns, wKnights, wBishops, wRooks, wQueens, wKings, bPawns, bKnights, bBishops, bRooks, bQueens, bKings, wPieces, bPieces, aPieces};
 
 /* ------ DECLARATIONS --------*/
 typedef uint64_t BitBoard;

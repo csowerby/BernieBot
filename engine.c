@@ -32,59 +32,55 @@ int badEvaluation(GameState *gs){
     return evaluation;
 }
 
+/* -------------- TEST IF IN CHECK -------------------- */
+
+int inCheck(GameState* gs){
+    if(gs->whiteToMove){
+        //TODO: -
+    }
+    
+    
+    return 0; 
+}
+
 /* ------------ MOVE CALCULATION METHODS ------------- */
 
-int moveGen(Move **moveList, GameState *gs){
+int moveGen(Move **totalMoveList, GameState *gs){
     /* Params: Double Pointer to moveList, pointer to gamestate
         returns: integer with length of moveList, -1 if failure, 0 if no moves
      
      
      NOTE- ONE TRY COULD BE TO RETURN -1 IF CAPTURE OF KING IS A LEGAL MOVE, i.e. the last move was illegal and we need to unmake the last move
      */
-    
-    
-    
-    // METHOD: GENERATE ALL PSEUDO-LEGAL MOVES
-    
-    
-    int *p;
-    int move_num = 1;
-    p = malloc(move_num * sizeof(Move));
-    
-    
-    
-    // INT RETURNS NUMBER OF POSSIBLE MOVES
-    // MOST POSSIBLE MOVES IN A POSITION IS 218, probably just going to consider 100 or 150;
-    int numMoves = 0;
-    // Loop through all maj + min pieces
-        // Calculate Their moves using precalculation
-        // For pawns calculate only moves
-            // Consider only queen promos for now?
-    // Calculate pawn captures individually. 
-    
-    // Use bitmask for pawn captures?
-    
-    
-    
-    /*
-     
-     int testFunc(int **moveList){
-         
-         int length = rand()%10;
-         int *p;
-         p = (int*) malloc(length * sizeof(int));
-         
-         if (p == NULL){
-             return -1;
-         }
-         for (int i = 0; i < length; i++){
-             p[i] = i * 100;
-         }
-         *moveList = p;
-         return length;
-     }
 
-    */
+    int numMoves = 0;
+    Move *moveList;
+    moveList = malloc(218 * sizeof(Move));
+    
+    if(gs->whiteToMove){
+        if(getBit((BitBoard*)&gs->castlingPrivileges, 3)){
+            // Check if White Short Castle Legal
+            
+            // Check if Bishop, Rook, Knight, King, Pawn Move from g1, f1, intersect with the proper piece.
+            // Alternatively Check if king in check, or if g1, f1 are in check and the squares empty
+        }
+        if(getBit((BitBoard*)&gs->castlingPrivileges, 2)){
+            // Check if White Long Castle Legal
+        }
+    }else{
+        if(getBit((BitBoard*)&gs->castlingPrivileges, 2)){
+            // Check if Black Short Castle Legal
+        }
+        if(getBit((BitBoard*)&gs->castlingPrivileges, 1)){
+            // Check if Black Long Castle Legal
+        }
+    }
+    
+    
+    
+    
+
+
     
     
     return numMoves;

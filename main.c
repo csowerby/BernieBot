@@ -27,20 +27,13 @@ void moveInput(void){
  
  Next:
     
- * Implement rest of movegen
-    * pawn Moves
-    * pawn cap + enPassant
-    * promo
-    * castling
+ * Implement final function for move generation!
  
  * Implement make/unmake move
  
- * Implement move checking
-    * Bitboards for attacking pieces?
-    * vector attacks?
+ * Switch data type to all bitboards?
  
-
- * Write function to update the gamestate for each move
+ * Implement function to check legality of PL moves.
     
  
  * Implement minimax
@@ -87,20 +80,14 @@ int main(void) {
     clock_t executionStart = clock();
     
 
-    
-    
     init();
     GameState gs;
     init_GameState(&gs,  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    printGameStateInfo(&gs, false);
+
     
     
-    Move *moveList = NULL;
-    int numMoves = calcPawnMoves(&moveList, &gs);
-    for(int i = 0; i < numMoves; i++){
-        printMoveInfo(&moveList[i]);
-    }
     
+    printGameStateInfo(&gs, true);
     
     clock_t executionEnd = clock();
     double elapsedTime = (double) (executionEnd - executionStart)/ CLOCKS_PER_SEC;

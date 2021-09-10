@@ -38,11 +38,6 @@ uint8_t get_ls1b_pos(BitBoard *board){
 
 
 
-
-
-
-
-
 /* ------- GAMESTATE INITIALIZATION --------- */
 void init_GameState(GameState *gs, char *fen){
     // Fill arrays with zero
@@ -92,6 +87,7 @@ void init_GameState(GameState *gs, char *fen){
             }
         }else{
             // Piece needs to be appended
+            
             int piece_num = fenCharToNum(fen[i]);
             int square_num = 8* rank + file;
             // add piece to numPieces
@@ -105,18 +101,14 @@ void init_GameState(GameState *gs, char *fen){
                 }
             }
             // Add Piece to BitBoard
+
+            setBit(&gs->boards[piece_num], square_num);
             if (piece_num < 6){
-                if (piece_num == 0){
-                    setBit(&gs->boards[0], square_num);
-                }
-                setBit(&gs->boards[2], square_num);
+                setBit(&gs->boards[wPieces], square_num);
             }else{
-                if(piece_num == 6){
-                    setBit(&gs->boards[1], square_num);
-                }
-                setBit(&gs->boards[3], square_num);
+                setBit(&gs->boards[bPieces], square_num);
             }
-            setBit(&gs->boards[4], square_num);
+            setBit(&gs->boards[aPieces], square_num);
             file++;
         }
     }
@@ -248,7 +240,7 @@ void printGameStateInfo(GameState *gs, bool printBitBoards){
     // BitBoards
     if (printBitBoards){
         printf("\n -- GAMESTATE INFO -- \n\n");
-        printf("BitBoards: (wPawns, bPawns, wPieces, bPieces, aPieces, wAttacks, bAttacks)...\n");
+        printf("BitBoards: (wPawns, wKnights, wBishops, wRooks, wQueens, wKings, bPawns, ... , wPieces, bPieces \n");
         for (int i = 0; i < NUM_BOARDS; i++){
             printBitBoard(gs->boards + i);
         }
