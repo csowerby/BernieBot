@@ -24,14 +24,19 @@ typedef struct{
     
     BitBoard boards[NUM_BOARDS]; // wP, bP, wPce, bPce, aPce
     
+    /* - WE DON'T WANT THE PCE LIST SHIT - I'M JUST KEEPING IT HERE FOR */
     Square pceList[12][10]; // Represents an array of the 10 possible pieces and it is possible to have 10 of each piece, fill with square numbers for each one, no_sqr
     uint8_t numPieces[12];
     
         // we have knights, bishops, rooks, queens, kings
     
+    
+    // Lookup of what piece is in a square for easier make/unmake move functions
+    uint8_t squareOccupancy[64];
+    
     uint8_t plyNum;
     
-    // Bitwise castling privileges in order White short, white long, black short, black long
+    // Bitwise castling privileges in order 3 = White short, 2 = white long, 1 = black short, 0 = black long
     
     uint8_t castlingPrivileges;
     
@@ -52,7 +57,7 @@ typedef struct{
 void init_GameState(GameState *gs, char *fen);
 int updateGameState(GameState *gs, Move*move);
 
-
+int inCheck(Square kingPos, GameState* gs);
 
 /* ------ METHODS FOR PRINTING GAMESTATE -------*/
 void printGameStateInfo(GameState *gs, bool printBitBoards);

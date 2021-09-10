@@ -12,13 +12,15 @@
 /* ------------ BITBOARD METHODS -------------- */
 
 void setBit(BitBoard *board, int bitPos){
-    uint64_t flag = 1;
-    *board |= flag << bitPos;
+    *board |= 1 << bitPos;
 }
 
 void clearBit(BitBoard *board, int bitPos){
-    uint64_t flag = 1;
-    *board &= ~(flag << bitPos);
+    *board &= ~(1 << bitPos);
+}
+
+void switchBit(BitBoard *board, int bitPos){
+    *board ^= (1 << bitPos);
 }
 
 bool getBit(BitBoard *board, int bitPos){
@@ -40,17 +42,25 @@ uint8_t get_ls1b_pos(BitBoard *board){
 
 /* ------- GAMESTATE INITIALIZATION --------- */
 void init_GameState(GameState *gs, char *fen){
-    // Fill arrays with zero
+    // Fill BitBoards with zero
     for (int i = 0; i < NUM_BOARDS; i++){
         gs->boards[i] = 0ULL;
 
     }
+    
+    // Fill PCELIST with Zero - NOTE: THIS FUNCTIONALITY IS BEING REMOVED IN THE FUTURE
     for (int i = 0; i < 12; i ++){
         for (int j = 0; j < 10; j++){
             gs->pceList[i][j] = no_sqr;
         }
         gs->numPieces[i] = 0;
     }
+    
+    //Fill squareOccupancy table with no_pce
+    for (int i = 0; i < 64; i++){
+        gs->squareOccupancy[i] = no_pce;
+    }
+    
     gs-> castlingPrivileges = 0;
     gs-> enPassantTarget = no_sqr;
     gs-> fiftyMovePly = 0;
@@ -90,6 +100,9 @@ void init_GameState(GameState *gs, char *fen){
             
             int piece_num = fenCharToNum(fen[i]);
             int square_num = 8* rank + file;
+            // Add Piece to squareOccupancy
+            gs->squareOccupancy[square_num] = piece_num;
+            
             // add piece to numPieces
             gs-> numPieces[piece_num]++;
             // add piece and square to pceList;
@@ -100,6 +113,7 @@ void init_GameState(GameState *gs, char *fen){
                     break;
                 }
             }
+            
             // Add Piece to BitBoard
 
             setBit(&gs->boards[piece_num], square_num);
@@ -218,22 +232,208 @@ int makeMove(GameState *gs, Move *move){
      0101 - en passant
          */
     
-    Square origin = *move >> 10;
-    Square target = (*move >> 4) & 63;
-    bool promo = getBit((BitBoard *)move, 3);
-    bool capture = getBit((BitBoard*)move, 2);
-    bool sp0 = getBit((BitBoard*)move, 1);
-    bool sp1 = getBit((BitBoard*)move, 0);
-    
-    // TODO: THIS IS UNFINISHED 
+    Square originSquare = *move >> 10;
+    Square targetSquare = (*move >> 4) & 63;
     
     
+    int colorToMoveOffset = 6;
+    if(gs->whiteToMove){
+        colorToMoveOffset = 0;
+    }
     
-    printf("origin: %i, target: %i", origin, target);
+    
+    if(getBit((BitBoard *)move, 3)){
+        // PROMOTION - 1xxx
+        
+        uint8_t promoPiece = (*move & 3) + 1 + colorToMoveOffset;
+        uint8_t piece = gs->squareOccupancy[originSquare];
+        // Clear original Piece
+        gs->squareOccupancy[originSquare] = no_pce;
+        clearBit(&gs->boards[piece], originSquare);
+        // Add Promoted Piece
+        uint8_t targetPiece = gs->squareOccupancy[targetSquare];
+        gs->squareOccupancy[targetSquare] = promoPiece;
+        setBit(&gs->boards[promoPiece], targetSquare);
+        
+        if (getBit((BitBoard*)move, 2)) {
+            // PROMO CAPTURE - 11xx
+            
+            //Remove Captured Piece - already removed in squareOccupancy, just need to update Bitboard
+            clearBit(&gs->boards[targetPiece], targetSquare);
+            
+        }
+    }else{
+        // NON PROMOTION - 0xxx
+        Piece originPiece = gs->squareOccupancy[originSquare];
+        Piece targetPiece = gs->squareOccupancy[targetSquare];
+        
+        // Clear Original Piece
+        gs->squareOccupancy[originSquare] = no_sqr;
+        switchBit(&gs->boards[originPiece], originSquare);
+        // Add moved Piece
+        gs->squareOccupancy[targetSquare] = originPiece;
+        switchBit(&gs->boards[originPiece], targetSquare);
+        if(getBit((BitBoard*)move, 2)){
+            // CAPTURE - 01xx
+            if(getBit((BitBoard*)move, 0)){
+                // EN PASSANT CAPTURE - 0101
+                
+                // Remove captured piece
+                if(gs->whiteToMove){
+                    switchBit(&gs->boards[targetPiece], targetSquare - 8);
+                    gs->squareOccupancy[targetSquare - 8] = no_pce;
+                }else{
+                    switchBit(&gs->boards[targetPiece], targetSquare + 8);
+                    gs->squareOccupancy[targetSquare + 8] = no_pce;
+                }
+            }else{
+                // REGULAR CAPTURE 0100
+                
+                // Remove captured piece
+                switchBit(&gs->boards[targetPiece], targetSquare);
+                
+            }
+        }else{
+            // Non Capture-Non Promo - 00xx
+            originPiece = gs->squareOccupancy[originSquare];
+            switchBit(&gs->boards[originPiece], originSquare);
+            switchBit(&gs->boards[originPiece], targetSquare);
+            
+            if(getBit((BitBoard*)move, 0)){
+                // DOUBLE PAWN PUSH - 0001
+                // Set EnPassant Status
+                if(gs->whiteToMove){
+                    gs->enPassantTarget = targetSquare - 8;
+                }else{
+                    gs->enPassantTarget = targetSquare + 8;
+                }
+            }else if(getBit((BitBoard*)move, 1)){
+                // CASTLE
+                if(getBit((BitBoard*)move, 0)){
+                    // LONG CASTLE - 0011
+                    if(gs->whiteToMove){
+                        switchBit(&gs->boards[wRooks], a1);
+                        switchBit(&gs->boards[wRooks], d1);
+                    }else{
+                        switchBit(&gs->boards[bRooks], a8);
+                        switchBit(&gs->boards[bRooks], d8);
+                    }
+                }else{
+                    // SHORT CASTLE - 0010
+                    if(gs->whiteToMove){
+                        switchBit(&gs->boards[wRooks], h1);
+                        switchBit(&gs->boards[wRooks], f1);
+                    }else{
+                        switchBit(&gs->boards[bRooks], h8);
+                        switchBit(&gs->boards[bRooks], f8);
+                    }
+                }
+            }
+        }
+    }
+    
+    // Update Game Ply
+    gs->plyNum++;
+    
+    // Update Castling Priviledges
+    if(originSquare == a1){
+        clearBit((BitBoard*)&gs->castlingPrivileges, 2); // white long castle
+    }else if(originSquare == h1){
+        clearBit((BitBoard*)&gs->castlingPrivileges, 3); // white short castle
+    }else if(originSquare == e1){
+        clearBit((BitBoard*)&gs->castlingPrivileges, 2); // white long castle
+        clearBit((BitBoard*)&gs->castlingPrivileges, 3); // white short castle
+    }else if(originSquare == a8){
+        clearBit((BitBoard*)&gs->castlingPrivileges, 0); // black long castle
+    }else if(originSquare == h8){
+        clearBit((BitBoard*)&gs->castlingPrivileges, 1); // white short castle
+    }else if(originSquare == e8){
+        clearBit((BitBoard*)&gs->castlingPrivileges, 0); // white long castle
+        clearBit((BitBoard*)&gs->castlingPrivileges, 1); // white short castle
+    }
+
+    // Already updated en Passant target
+    
+    //TODO: Fifty Move Rule Ply - maybe code 0001 just means pawn push?, then check if double to update ep square. 
+    // Probably will check if quiet move then add another flag -> PERHAPS ADDITIONAL CODE FOR QUIET MOVE PAWN PUSH
+    
+    
+    
+
+    
+    // Check if position Legal
+    Square kingPos = get_ls1b_pos(&gs->boards[wKings + colorToMoveOffset]);
+    if (inCheck(kingPos, gs)){
+        
+        gs->whiteToMove = !gs->whiteToMove;
+        
+        return -1;
+    }
+    
+    //Switch who is on move.
+    gs->whiteToMove = !gs->whiteToMove;
+    
     return 0;
 }
 
+/* -------------- TEST IF IN CHECK -------------------- */
 
+int inCheck(Square kingPos, GameState* gs){
+    if(gs->whiteToMove){
+        // White To Move
+        
+        // Rooks and Queens
+        if(getRookMoveBoard(kingPos, gs) & (gs->boards[bRooks] | gs->boards[bQueens])){
+            return 1;
+        }
+        
+        // Bishops and Queens
+        if(getBishopMoveBoard(kingPos, gs) & (gs->boards[bBishops] | gs->boards[bQueens])){
+            return 1;
+        }
+        
+        //Knights
+        if(knightMoves[kingPos] & gs->boards[bKnights]){
+            return 1;
+        }
+        
+        //Pawns
+        if( kingPos % 8 != 0 && (getBit(&gs->boards[bPawns], kingPos + 7))){
+            return 1;
+        }
+        if( kingPos % 8 != 7 && (getBit(&gs->boards[bPawns], kingPos + 9))){
+            return 1;
+        }
+        // Not in Check
+        return 0;
+    }else{
+        // Black To Move
+        
+        // Rooks and Queens
+        if(getRookMoveBoard(kingPos, gs) & (gs->boards[wRooks] | gs->boards[wQueens])){
+            return 1;
+        }
+        
+        // Bishops and Queens
+        if(getBishopMoveBoard(kingPos, gs) & (gs->boards[wBishops] | gs->boards[wQueens])){
+            return 1;
+        }
+        
+        //Knights
+        if(knightMoves[kingPos] & gs->boards[bKnights]){
+            return 1;
+        }
+        
+        //Pawns
+        if( (kingPos % 8) != 0 && (getBit(&gs->boards[wPawns], kingPos - 9))){
+            return 1;
+        }
+        if( (kingPos % 8) != 7 && (getBit(&gs->boards[wPawns], kingPos - 7))){
+            return 1;
+        }
+        return 0;
+    }
+}
 
 /* ------------------- METHODS FOR PRINTING GAMESTATE --------------- */
 void printGameStateInfo(GameState *gs, bool printBitBoards){

@@ -39,7 +39,9 @@ void moveInput(void){
  
  
  * Implement function to check legality of PL moves?
+    -> this is makeMove then check if in check, if not, we good. 
     
+ 
  
  * Implement minimax
  * implement ab pruning
@@ -94,13 +96,7 @@ int main(void) {
     
     //printGameStateInfo(&gs, true);
     
-    Move* moveList = NULL;
-    int numMoves = moveGen(&moveList, &gs);
     
-    printf("NUMBER OF MOVES: %i\n", numMoves);
-    for(int i = 0; i < numMoves; i++){
-        printMoveInfo(&moveList[i]); 
-    }
     
     clock_t executionEnd = clock();
     double elapsedTime = (double) (executionEnd - executionStart)/ CLOCKS_PER_SEC;

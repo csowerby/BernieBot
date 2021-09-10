@@ -94,6 +94,7 @@ enum bitboards {wPawns, wKnights, wBishops, wRooks, wQueens, wKings, bPawns, bKn
 typedef uint64_t BitBoard;
 typedef uint16_t Move;
 typedef uint8_t Square;
+typedef uint8_t Piece; 
 
 /* ------------ MAGIC STRUCT --------------- */
 
@@ -130,6 +131,7 @@ int fenCharToNum(char fChar);
 
 void setBit(BitBoard *board, int bitPos);
 void clearBit(BitBoard *board, int bitPos);
+void switchBit(BitBoard *board, int bitPos);
 bool getBit(BitBoard *board, int bitPos);
 uint8_t get_ls1b_pos(BitBoard *board);
 

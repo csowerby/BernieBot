@@ -32,64 +32,7 @@ int badEvaluation(GameState *gs){
     return evaluation;
 }
 
-/* -------------- TEST IF IN CHECK -------------------- */
 
-int inCheck(Square kingPos, GameState* gs){
-    if(gs->whiteToMove){
-        // White To Move
-        
-        // Rooks and Queens
-        if(getRookMoveBoard(kingPos, gs) & (gs->boards[bRooks] | gs->boards[bQueens])){
-            return 1;
-        }
-        
-        // Bishops and Queens
-        if(getBishopMoveBoard(kingPos, gs) & (gs->boards[bBishops] | gs->boards[bQueens])){
-            return 1;
-        }
-        
-        //Knights
-        if(knightMoves[kingPos] & gs->boards[bKnights]){
-            return 1; 
-        }
-        
-        //Pawns
-        if( kingPos % 8 != 0 && (getBit(&gs->boards[bPawns], kingPos + 7))){
-            return 1;
-        }
-        if( kingPos % 8 != 7 && (getBit(&gs->boards[bPawns], kingPos + 9))){
-            return 1;
-        }
-        // Not in Check
-        return 0;
-    }else{
-        // Black To Move
-        
-        // Rooks and Queens
-        if(getRookMoveBoard(kingPos, gs) & (gs->boards[wRooks] | gs->boards[wQueens])){
-            return 1;
-        }
-        
-        // Bishops and Queens
-        if(getBishopMoveBoard(kingPos, gs) & (gs->boards[wBishops] | gs->boards[wQueens])){
-            return 1;
-        }
-        
-        //Knights
-        if(knightMoves[kingPos] & gs->boards[bKnights]){
-            return 1;
-        }
-        
-        //Pawns
-        if( (kingPos % 8) != 0 && (getBit(&gs->boards[wPawns], kingPos - 9))){
-            return 1;
-        }
-        if( (kingPos % 8) != 7 && (getBit(&gs->boards[wPawns], kingPos - 7))){
-            return 1;
-        }
-        return 0;
-    }
-}
 
 
 
