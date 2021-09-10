@@ -14,7 +14,13 @@
 #include "GameState.h"
 
 int badEvaluation(GameState *gs);
+
+
 int moveGen(Move **moveList, GameState *gs);
+
+BitBoard getBishopMoveBoard(Square origin_sq, GameState* gs);
+BitBoard getRookMoveBoard(Square origin_sq, GameState* gs);
+
 int calcKingMoves(Move **kingList, Square origin_sq, GameState *gs);
 int calcKnightMoves(Move **kingList, Square origin_sq, GameState *gs);
 int calcRookMoves(Move **slidingList, Square origin_sq, GameState *gs);

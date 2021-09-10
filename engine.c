@@ -36,12 +36,64 @@ int badEvaluation(GameState *gs){
 
 int inCheck(GameState* gs){
     if(gs->whiteToMove){
-        //TODO: -
+        // White To Move
+        Square kingPos = get_ls1b_pos(&gs->boards[wKings]);
+        
+        // Rooks and Queens
+        if(getRookMoveBoard(kingPos, gs) & (gs->boards[bRooks] | gs->boards[bQueens])){
+            return 1;
+        }
+        
+        // Bishops and Queens
+        if(getBishopMoveBoard(kingPos, gs) & (gs->boards[bBishops] | gs->boards[bQueens])){
+            return 1;
+        }
+        
+        //Knights
+        if(knightMoves[kingPos] & gs->boards[bKnights]){
+            return 1; 
+        }
+        
+        //Pawns
+        if( kingPos % 8 != 0 && (getBit(&gs->boards[bPawns], kingPos + 7))){
+            return 1;
+        }
+        if( kingPos % 8 != 7 && (getBit(&gs->boards[bPawns], kingPos + 9))){
+            return 1;
+        }
+        // Not in Check
+        return 0;
+    }else{
+        // Black To Move
+        Square kingPos = get_ls1b_pos(&gs->boards[bKings]);
+        
+        // Rooks and Queens
+        if(getRookMoveBoard(kingPos, gs) & (gs->boards[wRooks] | gs->boards[wQueens])){
+            return 1;
+        }
+        
+        // Bishops and Queens
+        if(getBishopMoveBoard(kingPos, gs) & (gs->boards[wBishops] | gs->boards[wQueens])){
+            return 1;
+        }
+        
+        //Knights
+        if(knightMoves[kingPos] & gs->boards[bKnights]){
+            return 1;
+        }
+        
+        //Pawns
+        if( (kingPos % 8) != 0 && (getBit(&gs->boards[wPawns], kingPos - 9))){
+            return 1;
+        }
+        if( (kingPos % 8) != 7 && (getBit(&gs->boards[wPawns], kingPos - 7))){
+            return 1;
+        }
+        return 0;
     }
-    
-    
-    return 0; 
 }
+
+
 
 /* ------------ MOVE CALCULATION METHODS ------------- */
 
@@ -84,6 +136,23 @@ int moveGen(Move **totalMoveList, GameState *gs){
     
     
     return numMoves;
+}
+
+
+BitBoard getBishopMoveBoard(Square origin_sq, GameState* gs){
+    BitBoard occ = gs->boards[aPieces];
+    occ &= bishopMagics[origin_sq].mask;
+    occ *= bishopMagics[origin_sq].magic;
+    occ >>= bishopMagics[origin_sq].shift;
+    return bishopMagics[origin_sq].attackPtr[occ];
+}
+
+BitBoard getRookMoveBoard(Square origin_sq, GameState* gs){
+    BitBoard occ = gs->boards[aPieces];
+    occ &= rookMagics[origin_sq].mask;
+    occ *= rookMagics[origin_sq].magic;
+    occ >>= rookMagics[origin_sq].shift;
+    return rookMagics[origin_sq].attackPtr[occ];
 }
 
 
@@ -249,7 +318,7 @@ int calcBishopMoves(Move **diagList, Square origin_sq, GameState *gs){
     occ *= bishopMagics[origin_sq].magic;
     occ >>= bishopMagics[origin_sq].shift;
     BitBoard moves = bishopMagics[origin_sq].attackPtr[occ];
-    printBitBoard(&moves);
+    //printBitBoard(&moves);
         
     BitBoard attacks;
         // Remove captures of our own pieces and let attacks be a separate board
