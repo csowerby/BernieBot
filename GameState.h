@@ -57,7 +57,7 @@ typedef struct{
 void init_GameState(GameState *gs, char *fen);
 int updateGameState(GameState *gs, Move*move);
 
-int inCheck(Square kingPos, GameState* gs);
+
 
 /* ------ METHODS FOR PRINTING GAMESTATE -------*/
 void printGameStateInfo(GameState *gs, bool printBitBoards);

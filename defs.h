@@ -127,6 +127,7 @@ int square_coords_to_num(int rank, char file);
 char pieceNumToChar(int num);
 int fenCharToNum(char fChar);
 
+
 /* ------ BITBOARD METHODS --------*/
 
 void setBit(BitBoard *board, int bitPos);
