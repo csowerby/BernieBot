@@ -61,6 +61,8 @@ void init_GameState(GameState *gs, char *fen){
         gs->squareOccupancy[i] = no_pce;
     }
     
+    gs->histIndex = 0; 
+    
     gs-> castlingPrivileges = 0;
     gs-> enPassantTarget = no_sqr;
     gs-> fiftyMovePly = 0;

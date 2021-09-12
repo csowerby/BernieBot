@@ -90,6 +90,9 @@ enum {w_short_castle = 8, w_long_castle=4, b_short_castle=2, b_long_castle=1};
 // Bitboards
 enum bitboards {wPawns, wKnights, wBishops, wRooks, wQueens, wKings, bPawns, bKnights, bBishops, bRooks, bQueens, bKings, wPieces, bPieces, aPieces};
 
+// Game History
+enum gameHist {ep_target, castling_rights, captured_piece}; 
+
 /* ------ DECLARATIONS --------*/
 typedef uint64_t BitBoard;
 typedef uint16_t Move;

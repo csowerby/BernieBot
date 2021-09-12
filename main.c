@@ -27,9 +27,6 @@ void moveInput(void){
  
  Next:
     
- * Implement final function for move generation!
-    * Castling 
-    * Generate all PL move
  
  * Implement make/unmake move
     * Use XOR to update bitboards https://www.chessprogramming.org/General_Setwise_Operations#UpdateByMove
@@ -52,7 +49,11 @@ void moveInput(void){
   * Zobrist hashing not super important -> implement for transposition table.
   * Move history? Is this necessary? 
  
-  * magic bitboards for move generation? 
+  * magic bitboards for move generation?
+ 
+ * for performance - switch any function passing less than 8 bytes to passing the actual object rather than a pointer 
+ 
+ 
  */
 
 
@@ -82,7 +83,16 @@ void moveInput(void){
  type format add -f decimal Square
  */
 
-#include "magic.h"
+
+#include "Perft.h"
+
+
+
+
+
+
+
+
 
 int main(void) {
     clock_t executionStart = clock();

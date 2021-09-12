@@ -50,6 +50,9 @@ typedef struct{
     uint64_t posKey; // Key of position, to be looked up in transposition table.
         // ZOBRIST HASHING
     
+    uint8_t gameHist[25][3];
+    int histIndex;
+    
 }GameState;
 
 

@@ -18,7 +18,8 @@
 int badEvaluation(GameState *gs);
 
 // Move Making
-int makeMove(GameState *gs, Move *move);
+int makeMove(GameState *gs, Move move);
+int unmakeMove(GameState *gs, Move move);
 int inCheck(Square kingPos, GameState* gs);
 
 // Move Generation
