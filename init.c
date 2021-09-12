@@ -103,7 +103,7 @@ char pieceNumToChar(int num){
             break;
         case 7:
             // Black Knight
-            p = 'k';
+            p = 'n';
             break;
         case 8:
             // Black Bishop
@@ -120,6 +120,9 @@ char pieceNumToChar(int num){
         case 11:
             // Black King
             p = 'k';
+            break;
+        case no_pce:
+            p = ' ';
             break;
     }
     return p;

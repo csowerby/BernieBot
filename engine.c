@@ -58,61 +58,86 @@ int makeMove(GameState *gs, Move move){
     Square originSquare = move >> 10;
     Square targetSquare = (move >> 4) & 63;
     
+    Piece originPiece = gs->squareOccupancy[originSquare];
+    Piece targetPiece = gs->squareOccupancy[targetSquare];
     
-    int colorToMoveOffset = 6;
+    int sidePieces, oppositeSidePieces, colorToMoveOffset;
     if(gs->whiteToMove){
+        sidePieces = wPieces;
+        oppositeSidePieces = bPieces;
         colorToMoveOffset = 0;
+    }else{
+        sidePieces = bPieces;
+        oppositeSidePieces = wPieces;
+        colorToMoveOffset = 6;
     }
     
     // Add info to Hist
     gs->gameHist[gs->histIndex][castling_rights] = gs->castlingPrivileges;
     gs->gameHist[gs->histIndex][ep_target] = gs->enPassantTarget;
+    gs->gameHist[gs->histIndex][captured_piece] = targetPiece;
+    
+    
+    // To do for all Moves - Remove originPiece from originSquare
+    gs->squareOccupancy[originSquare] = no_pce;
+    
+    switchBit(&gs->boards[originPiece], originSquare);
+    switchBit(&gs->boards[sidePieces], originSquare);
+    switchBit(&gs->boards[aPieces], originSquare);
+    
+    //Set EP Square to no_sqr (will be reset to the correct later if necessary
+    gs->enPassantTarget = no_sqr;
     
     
     if(getBit((BitBoard *)&move, 3)){
         // PROMOTION - 1xxx
-        
         uint8_t promoPiece = (move & 3) + 1 + colorToMoveOffset;
-        uint8_t piece = wPawns + colorToMoveOffset;
-        // Clear original Piece
-        gs->squareOccupancy[originSquare] = no_pce;
-        clearBit(&gs->boards[piece], originSquare);
+        
         // Add Promoted Piece
-        uint8_t targetPiece = gs->squareOccupancy[targetSquare];
-        // Push captured piece to history
-        gs->gameHist[gs->histIndex][captured_piece] = targetPiece;
         gs->squareOccupancy[targetSquare] = promoPiece;
-        setBit(&gs->boards[promoPiece], targetSquare);
+        
+        switchBit(&gs->boards[promoPiece], targetSquare);
+        switchBit(&gs->boards[sidePieces], targetSquare);
         
         if (getBit((BitBoard*)&move, 2)) {
             // PROMO CAPTURE - 11xx
             
-            //Remove Captured Piece - already removed in squareOccupancy, just need to update Bitboard
-            clearBit(&gs->boards[targetPiece], targetSquare);
+            //Remove Captured Piece
+            switchBit(&gs->boards[targetPiece], targetSquare);
             
+        }else{
+            // Non-promo capture, need to update aPieces
+            switchBit(&gs->boards[aPieces], targetSquare);
         }
+                              
+                                               
     }else{
         // NON PROMOTION - 0xxx
-        Piece originPiece = gs->squareOccupancy[originSquare];
-        Piece targetPiece = gs->squareOccupancy[targetSquare];
-        gs->gameHist[gs->histIndex][captured_piece] = targetPiece;
-        // Clear Original Piece
-        gs->squareOccupancy[originSquare] = no_sqr;
-        switchBit(&gs->boards[originPiece], originSquare);
-        // Add moved Piece
+        
+        // Add Moved Piece
         gs->squareOccupancy[targetSquare] = originPiece;
+        
         switchBit(&gs->boards[originPiece], targetSquare);
+        switchBit(&gs->boards[sidePieces], targetSquare);
+        
         if(getBit((BitBoard*)&move, 2)){
             // CAPTURE - 01xx
             if(getBit((BitBoard*)&move, 0)){
                 // EN PASSANT CAPTURE - 0101
                 
+                // Switch bit at targetSquare for aPieces
+                switchBit(&gs->boards[aPieces], targetSquare);
+                
                 // Remove captured piece
                 if(gs->whiteToMove){
-                    switchBit(&gs->boards[targetPiece], targetSquare - 8);
+                    switchBit(&gs->boards[bPawns], targetSquare - 8);
+                    switchBit(&gs->boards[oppositeSidePieces], targetSquare - 8);
+                    switchBit(&gs->boards[aPieces], targetSquare - 8);
                     gs->squareOccupancy[targetSquare - 8] = no_pce;
                 }else{
-                    switchBit(&gs->boards[targetPiece], targetSquare + 8);
+                    switchBit(&gs->boards[wPawns], targetSquare + 8);
+                    switchBit(&gs->boards[oppositeSidePieces], targetSquare + 8);
+                    switchBit(&gs->boards[aPieces], targetSquare + 8);
                     gs->squareOccupancy[targetSquare + 8] = no_pce;
                 }
             }else{
@@ -120,13 +145,14 @@ int makeMove(GameState *gs, Move move){
                 
                 // Remove captured piece
                 switchBit(&gs->boards[targetPiece], targetSquare);
+                switchBit(&gs->boards[oppositeSidePieces], targetSquare);
                 
             }
         }else{
             // Non Capture-Non Promo - 00xx
-            originPiece = gs->squareOccupancy[originSquare];
-            switchBit(&gs->boards[originPiece], originSquare);
-            switchBit(&gs->boards[originPiece], targetSquare);
+            
+            // Non capture -> switch targetSquare at aPieces
+            switchBit(&gs->boards[aPieces], targetSquare);
             
             if(getBit((BitBoard*)&move, 0)){
                 // DOUBLE PAWN PUSH - 0001
@@ -141,20 +167,40 @@ int makeMove(GameState *gs, Move move){
                 if(getBit((BitBoard*)&move, 0)){
                     // LONG CASTLE - 0011
                     if(gs->whiteToMove){
+                        gs->squareOccupancy[a1] = no_pce;
                         switchBit(&gs->boards[wRooks], a1);
                         switchBit(&gs->boards[wRooks], d1);
+                        switchBit(&gs->boards[wPieces], a1);
+                        switchBit(&gs->boards[wPieces], d1);
+                        switchBit(&gs->boards[aPieces], a1);
+                        switchBit(&gs->boards[aPieces], d1);
                     }else{
-                        switchBit(&gs->boards[bRooks], a8);
-                        switchBit(&gs->boards[bRooks], d8);
+                        gs->squareOccupancy[a8] = no_pce;
+                        switchBit(&gs->boards[wRooks], a8);
+                        switchBit(&gs->boards[wRooks], d8);
+                        switchBit(&gs->boards[wPieces], a8);
+                        switchBit(&gs->boards[wPieces], d8);
+                        switchBit(&gs->boards[aPieces], a8);
+                        switchBit(&gs->boards[aPieces], d8);
                     }
                 }else{
                     // SHORT CASTLE - 0010
                     if(gs->whiteToMove){
+                        gs->squareOccupancy[h1] = no_pce;
                         switchBit(&gs->boards[wRooks], h1);
                         switchBit(&gs->boards[wRooks], f1);
+                        switchBit(&gs->boards[wPieces], h1);
+                        switchBit(&gs->boards[wPieces], f1);
+                        switchBit(&gs->boards[aPieces], h1);
+                        switchBit(&gs->boards[aPieces], f1);
                     }else{
-                        switchBit(&gs->boards[bRooks], h8);
-                        switchBit(&gs->boards[bRooks], f8);
+                        gs->squareOccupancy[h8] = no_pce;
+                        switchBit(&gs->boards[wRooks], h8);
+                        switchBit(&gs->boards[wRooks], f8);
+                        switchBit(&gs->boards[wPieces], h8);
+                        switchBit(&gs->boards[wPieces], f8);
+                        switchBit(&gs->boards[aPieces], h8);
+                        switchBit(&gs->boards[aPieces], f8);
                     }
                 }
             }
@@ -210,108 +256,157 @@ int makeMove(GameState *gs, Move move){
 int unmakeMove(GameState *gs, Move move){
     // UNDO MOVE
     
+    gs->whiteToMove = !gs->whiteToMove;
+    
+    // Restore info from history stack
     gs->histIndex--;
     
-    Piece targetPiece = gs->gameHist[gs->histIndex][captured_piece];
     gs->enPassantTarget = gs->gameHist[gs->histIndex][ep_target];
     gs->castlingPrivileges = gs->gameHist[gs->histIndex][castling_rights];
     
     Square originSquare = move >> 10;
     Square targetSquare = (move >> 4) & 63;
     
-    int colorToMoveOffset = 6;
+    Piece originPiece = gs->squareOccupancy[targetSquare];
+    Piece targetPiece = gs->gameHist[gs->histIndex][captured_piece];
+    
+    int sidePieces, oppositeSidePieces, colorToMoveOffset;
     if(gs->whiteToMove){
+        sidePieces = wPieces;
+        oppositeSidePieces = bPieces;
         colorToMoveOffset = 0;
+    }else{
+        sidePieces = bPieces;
+        oppositeSidePieces = wPieces;
+        colorToMoveOffset = 6;
     }
+    
+    // To do for all Moves - Restore originPiece to originSquare
+    gs->squareOccupancy[originSquare] = originPiece;
+    
+    switchBit(&gs->boards[originPiece], originSquare);
+    switchBit(&gs->boards[sidePieces], originSquare);
+    switchBit(&gs->boards[aPieces], originSquare);
     
     if(getBit((BitBoard *)&move, 3)){
         // PROMOTION - 1xxx
-        
         uint8_t promoPiece = (move & 3) + 1 + colorToMoveOffset;
-        uint8_t originPiece = wPawns + colorToMoveOffset;
-        // Re-add origin piece
-        gs->squareOccupancy[originSquare] = originPiece;
-        setBit(&gs->boards[originPiece], originSquare);
+        
         // Remove Promoted Piece
-        clearBit(&gs->boards[promoPiece], targetSquare);
-        gs->squareOccupancy[targetSquare] = no_pce;
+        switchBit(&gs->boards[promoPiece], targetSquare);
+        switchBit(&gs->boards[sidePieces], targetSquare);
         
         if (getBit((BitBoard*)&move, 2)) {
             // PROMO CAPTURE - 11xx
             
-            //Already reset the pawn to before it promoted - now need to re-add the captured piece
-            setBit(&gs->boards[targetPiece], targetSquare);
-            gs->squareOccupancy[targetSquare] = targetPiece;
+            //Replace Captured Piece
+            switchBit(&gs->boards[targetPiece], targetSquare);
+            switchBit(&gs->boards[oppositeSidePieces], targetSquare);
             
+        }else{
+            // Non-promo capture, need to update aPieces
+            switchBit(&gs->boards[aPieces], targetSquare);
+            // Set targetSquare to no piece
+            gs->squareOccupancy[targetSquare] = no_pce;
         }
+                              
+                                               
     }else{
         // NON PROMOTION - 0xxx
-        Piece originPiece = gs->squareOccupancy[targetSquare];
-
-        // Put origin piece into origin square
-        gs->squareOccupancy[originSquare] = originPiece;
-        switchBit(&gs->boards[originPiece], originSquare);
-        // Remove origin piece from targetSquare
-        gs->squareOccupancy[targetSquare] = no_pce;
+        
+        // Remove Moved Piece
+        
         switchBit(&gs->boards[originPiece], targetSquare);
+        switchBit(&gs->boards[sidePieces], targetSquare);
         
         if(getBit((BitBoard*)&move, 2)){
             // CAPTURE - 01xx
             if(getBit((BitBoard*)&move, 0)){
                 // EN PASSANT CAPTURE - 0101
                 
-                // Reset Captured Piece
+                // Switch bit at targetSquare for aPieces
+                switchBit(&gs->boards[aPieces], targetSquare);
+                
+                // Replace captured piece
                 if(gs->whiteToMove){
-                    switchBit(&gs->boards[targetPiece], targetSquare - 8);
-                    gs->squareOccupancy[targetSquare - 8] = targetPiece;
+                    switchBit(&gs->boards[bPawns], targetSquare - 8);
+                    switchBit(&gs->boards[oppositeSidePieces], targetSquare - 8);
+                    switchBit(&gs->boards[aPieces], targetSquare - 8);
+                    gs->squareOccupancy[targetSquare - 8] = bPawns;
+                    gs->squareOccupancy[targetSquare] = no_pce;
                 }else{
-                    switchBit(&gs->boards[targetPiece], targetSquare + 8);
-                    gs->squareOccupancy[targetSquare + 8] = targetPiece;
+                    switchBit(&gs->boards[wPawns], targetSquare + 8);
+                    switchBit(&gs->boards[oppositeSidePieces], targetSquare + 8);
+                    switchBit(&gs->boards[aPieces], targetSquare + 8);
+                    gs->squareOccupancy[targetSquare + 8] = wPawns;
+                    gs->squareOccupancy[targetSquare] = no_pce; 
                 }
             }else{
                 // REGULAR CAPTURE 0100
                 
-                // re-add captured piece
+                // Replace captured piece
+                gs->squareOccupancy[targetSquare] = targetPiece; 
                 switchBit(&gs->boards[targetPiece], targetSquare);
-                gs->squareOccupancy[targetSquare] = targetPiece;
+                switchBit(&gs->boards[oppositeSidePieces], targetSquare);
                 
             }
         }else{
-            // Non Capture-Non Promo - 00xx (also includes double pawn push)
-            originPiece = gs->squareOccupancy[targetSquare];
-            switchBit(&gs->boards[originPiece], originSquare);
-            switchBit(&gs->boards[originPiece], targetSquare);
+            // Non Capture-Non Promo - 00xx
+            
+            // Reset targetSquare to no piece
+            gs->squareOccupancy[targetSquare] = no_pce;
+            // Non capture -> switch targetSquare at aPieces
+            switchBit(&gs->boards[aPieces], targetSquare);
             
             if(getBit((BitBoard*)&move, 1)){
                 // CASTLE
                 if(getBit((BitBoard*)&move, 0)){
                     // LONG CASTLE - 0011
                     if(gs->whiteToMove){
+                        gs->squareOccupancy[a1] = wRooks;
                         switchBit(&gs->boards[wRooks], a1);
                         switchBit(&gs->boards[wRooks], d1);
+                        switchBit(&gs->boards[wPieces], a1);
+                        switchBit(&gs->boards[wPieces], d1);
+                        switchBit(&gs->boards[aPieces], a1);
+                        switchBit(&gs->boards[aPieces], d1);
                     }else{
-                        switchBit(&gs->boards[bRooks], a8);
-                        switchBit(&gs->boards[bRooks], d8);
+                        gs->squareOccupancy[a8] = bRooks;
+                        switchBit(&gs->boards[wRooks], a8);
+                        switchBit(&gs->boards[wRooks], d8);
+                        switchBit(&gs->boards[wPieces], a8);
+                        switchBit(&gs->boards[wPieces], d8);
+                        switchBit(&gs->boards[aPieces], a8);
+                        switchBit(&gs->boards[aPieces], d8);
                     }
                 }else{
                     // SHORT CASTLE - 0010
                     if(gs->whiteToMove){
+                        gs->squareOccupancy[h1] = wRooks;
                         switchBit(&gs->boards[wRooks], h1);
                         switchBit(&gs->boards[wRooks], f1);
+                        switchBit(&gs->boards[wPieces], h1);
+                        switchBit(&gs->boards[wPieces], f1);
+                        switchBit(&gs->boards[aPieces], h1);
+                        switchBit(&gs->boards[aPieces], f1);
                     }else{
-                        switchBit(&gs->boards[bRooks], h8);
-                        switchBit(&gs->boards[bRooks], f8);
+                        gs->squareOccupancy[h8] = bRooks;
+                        switchBit(&gs->boards[wRooks], h8);
+                        switchBit(&gs->boards[wRooks], f8);
+                        switchBit(&gs->boards[wPieces], h8);
+                        switchBit(&gs->boards[wPieces], f8);
+                        switchBit(&gs->boards[aPieces], h8);
+                        switchBit(&gs->boards[aPieces], f8);
                     }
                 }
             }
         }
     }
     
+
     // Update Game Ply
     gs->plyNum--;
-    
-    gs->whiteToMove = !gs->whiteToMove; 
-    
+
     return 0; 
 }
 /* -------------- TEST IF IN CHECK -------------------- */
@@ -358,7 +453,7 @@ int inCheck(Square kingPos, GameState* gs){
         }
         
         //Knights
-        if(knightMoves[kingPos] & gs->boards[bKnights]){
+        if(knightMoves[kingPos] & gs->boards[wKnights]){
             return 1;
         }
         
@@ -543,8 +638,11 @@ int moveGen(Move **totalMoveList, GameState *gs){
         int numKnightMoves = calcKnightMoves(&knightMoves, knightSquare, gs);
         memcpy(moveList + moveCount, knightMoves, numKnightMoves * sizeof(Move));
         moveCount += numKnightMoves;
+        
+        
         free(knightMoves);
     }
+    
     moveList = realloc(moveList, moveCount * sizeof(Move));
     *totalMoveList = moveList;
     
@@ -593,6 +691,7 @@ int calcKnightMoves(Move **knightList, Square origin_sq, GameState *gs){
     
     Square targetSquare;
     while(moveBoard){
+        moveList[moveCount] = 0;
         targetSquare = get_ls1b_pos(&moveBoard);
         clearBit(&moveBoard, targetSquare);
         moveList[moveCount] += targetSquare << 4;
@@ -613,9 +712,10 @@ int calcKnightMoves(Move **knightList, Square origin_sq, GameState *gs){
         moveCount++;
         
     }
-    
+
     moveList = realloc(moveList, moveCount * sizeof(Move));
-    *knightList = moveList; 
+    *knightList = moveList;
+    
     
     return moveCount;
 }
@@ -644,7 +744,7 @@ int calcKingMoves(Move **kingList, Square origin_sq, GameState *gs){
     while(moveBoard){
         moveList[moveCount] = 0;
         targetSquare = get_ls1b_pos(&moveBoard);
-        printBitBoard(&moveBoard);
+        //printBitBoard(&moveBoard);
         clearBit(&moveBoard, targetSquare);
         moveList[moveCount] += targetSquare << 4;
         moveList[moveCount] += origin_sq << 10;
@@ -779,24 +879,23 @@ int calcPawnMoves(Move **pawnList, GameState *gs){
 
     if(gs->whiteToMove){
         BitBoard pawns = gs->boards[wPawns];
-        printBitBoard(&pawns); 
         //ATTACKS
-        BitBoard leftPawnAttackPromos = ((pawns & notAFile)>>7) & gs->boards[bPieces] & rank8;
-        printBitBoard(&leftPawnAttackPromos);
-        BitBoard rightPawnAttackPromos = ((pawns & notHFile)>>9) & gs->boards[bPieces] & rank8;
-        printBitBoard(&rightPawnAttackPromos);
-        BitBoard leftPawnAttacks = ((pawns & notAFile)>>7) & gs->boards[bPieces] & notRank8;
-        printBitBoard(&leftPawnAttacks);
-        BitBoard rightPawnAttacks = ((pawns & notHFile)>>9) & gs->boards[bPieces] & notRank8;
-        printBitBoard(&rightPawnAttacks);
+        BitBoard leftPawnAttackPromos = ((pawns & notAFile)<<7) & gs->boards[bPieces] & rank8;
+        //printBitBoard(&leftPawnAttackPromos);
+        BitBoard rightPawnAttackPromos = ((pawns & notHFile)<<9) & gs->boards[bPieces] & rank8;
+        //printBitBoard(&rightPawnAttackPromos);
+        BitBoard leftPawnAttacks = ((pawns & notAFile)<<7) & gs->boards[bPieces] & notRank8;
+        //printBitBoard(&leftPawnAttacks);
+        BitBoard rightPawnAttacks = ((pawns & notHFile)<<9) & gs->boards[bPieces] & notRank8;
+        //printBitBoard(&rightPawnAttacks);
         
         //QUIET MOVES
         BitBoard pawnMoveTargets = (pawns << 8) & ~gs->boards[aPieces] & notRank8;
-        printBitBoard(&pawnMoveTargets);
+        //printBitBoard(&pawnMoveTargets);
         BitBoard pawnMovePromo = (pawns << 8) &~gs->boards[aPieces] & rank8;
-        printBitBoard(&pawnMovePromo);
+        //printBitBoard(&pawnMovePromo);
         BitBoard pawnDoubleMoveTargets = ((pawns & rank2) << 16) & ~gs->boards[aPieces] & ~(gs->boards[aPieces] << 8);
-        printBitBoard(&pawnDoubleMoveTargets);
+        //printBitBoard(&pawnDoubleMoveTargets);
         
         
         // PAWN ATTACK PROMOTIONS
@@ -918,17 +1017,24 @@ int calcPawnMoves(Move **pawnList, GameState *gs){
             BitBoard leftEP = ((pawns & notAFile)<<7);
             BitBoard rightEP = ((pawns & notHFile)<<9);
             if (getBit(&leftEP, gs->enPassantTarget)){
+                moveList[moveCount] = 0;
                 moveList[moveCount] += gs->enPassantTarget << 4;
                 moveList[moveCount] += (gs->enPassantTarget - 7) << 10;
+                // Add ep-code 0101
+                moveList[moveCount] += 5;
                 moveCount++;
             }
             if (getBit(&rightEP, gs->enPassantTarget)){
+                moveList[moveCount] = 0; 
                 moveList[moveCount] += gs->enPassantTarget << 4;
                 moveList[moveCount] += (gs->enPassantTarget - 9) << 10;
+                // Add ep-code 0101
+                moveList[moveCount] += 5;
                 moveCount++;
             }
         }
     }else{
+        // Black to Move
         BitBoard pawns = gs->boards[bPawns];
         
         //ATTACKS
@@ -1061,15 +1167,23 @@ int calcPawnMoves(Move **pawnList, GameState *gs){
         
         if (gs->enPassantTarget != no_sqr){
             BitBoard leftEP = ((pawns & notAFile)>>9);
-            BitBoard rightEP = ((pawns & notHFile)<<7);
+            BitBoard rightEP = ((pawns & notHFile)>>7);
             if (getBit(&leftEP, gs->enPassantTarget)){
+                moveList[moveCount] = 0;
                 moveList[moveCount] += gs->enPassantTarget << 4;
                 moveList[moveCount] += (gs->enPassantTarget + 9) << 10;
+                
+                // Add ep-code 0101
+                moveList[moveCount] += 5;
                 moveCount++;
             }
             if (getBit(&rightEP, gs->enPassantTarget)){
+                moveList[moveCount] = 0; 
                 moveList[moveCount] += gs->enPassantTarget << 4;
                 moveList[moveCount] += (gs->enPassantTarget + 7) << 10;
+                
+                // Add ep-code 0101
+                moveList[moveCount] += 5;
                 moveCount++;
             }
         }

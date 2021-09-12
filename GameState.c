@@ -12,15 +12,15 @@
 /* ------------ BITBOARD METHODS -------------- */
 
 void setBit(BitBoard *board, int bitPos){
-    *board |= 1 << bitPos;
+    *board |= (1ULL << bitPos);
 }
 
 void clearBit(BitBoard *board, int bitPos){
-    *board &= ~(1 << bitPos);
+    *board &= ~(1ULL << bitPos);
 }
 
 void switchBit(BitBoard *board, int bitPos){
-    *board ^= (1 << bitPos);
+    *board ^= (1ULL << bitPos);
 }
 
 bool getBit(BitBoard *board, int bitPos){
@@ -186,7 +186,7 @@ void init_GameState(GameState *gs, char *fen){
     if (rank_num == -1 && file_char == -1){
         gs->enPassantTarget = no_sqr;
     }else{
-        gs-> enPassantTarget = square_coords_to_num(rank_num, file_char);
+        gs-> enPassantTarget = square_coords_to_num(rank_num-1, file_char);
     }
     i++;
      
@@ -209,6 +209,16 @@ void init_GameState(GameState *gs, char *fen){
         ply++;
     }
     gs->plyNum = ply;
+    
+    if (fen != NULL){
+        // ASSERT GENERATED FEN IS ACCURATE
+        char generatedFEN[200];
+        generateFEN(gs, generatedFEN);
+        for(int j = 0; fen[j]!= '\0'; j++){
+            assert(fen[j] == generatedFEN[j]);
+        }
+
+    }
 }
 
 
@@ -218,6 +228,8 @@ void init_GameState(GameState *gs, char *fen){
 /* ------------------- METHODS FOR PRINTING GAMESTATE --------------- */
 void printGameStateInfo(GameState *gs, bool printBitBoards){
     // BitBoards
+    char FEN[200];
+    printf("FEN: %s", generateFEN(gs, FEN)); 
     if (printBitBoards){
         printf("\n -- GAMESTATE INFO -- \n\n");
         printf("BitBoards: (wPawns, wKnights, wBishops, wRooks, wQueens, wKings, bPawns, ... , wPieces, bPieces \n");
@@ -226,7 +238,7 @@ void printGameStateInfo(GameState *gs, bool printBitBoards){
         }
     }
     
-    
+    /*
     // Piece Info/Locations
     printf("Piece List: \n");
     for(int pce = 0; pce < 12; pce ++ ){
@@ -240,11 +252,16 @@ void printGameStateInfo(GameState *gs, bool printBitBoards){
         }
         printf("\n");
     }
-    printf("\n");
+     */
+
     printf("Move: %i, Ply: %i\n", gs->plyNum/2 + 1, gs->plyNum);
     printf("White To Move?: %i\n", gs->whiteToMove);
     printf("Castling (KQkq): %i%i%i%i\n", getBit((BitBoard *)&gs->castlingPrivileges, 3), getBit((BitBoard *)&gs->castlingPrivileges, 2), getBit((BitBoard *)&gs->castlingPrivileges, 1), getBit((BitBoard *)&gs->castlingPrivileges, 0));
     printf("Fifty Move Ply Counter: %i\n", gs->fiftyMovePly);
+    
+    char ep_square[3];
+    
+    printf("EP Square %s\n", square_num_to_coords(ep_square, gs->enPassantTarget));
     printf("\nGame board:\n");
     printGameBoard(gs);
 }
@@ -254,23 +271,12 @@ void printGameBoard(GameState *gs){
     char top_bot_string[] = "+---+---+---+---+---+---+---+---+\n";
     
     // CALCULATE PIECE CHARACTER STRING
-    char pieces[64];
-    for (int i = 0; i < 64; i++){
-        pieces[i] = ' ';
-    }
-    for (int i = 0; i < 12; i++){
-        for (int j = 0; j < 10; j++)
-            if (gs->pceList[i][j] == 64){
-                break;
-            }else{
-                pieces[gs->pceList[i][j]] = pieceNumToChar(i);
-            }
-    }
+
     // PUT PIECES INTO THE BOARD AND PRINT IT:
     for(int rank = 7; rank >= 0; rank--){
         printf("%s", top_bot_string);
         for(int file = 0; file < 8; file++){
-            printf("| %c ", pieces[8 * rank + file]);
+            printf("| %c ", pieceNumToChar(gs->squareOccupancy[8 * rank + file]));
         }
         printf("|\n");
     }
@@ -288,3 +294,131 @@ void printBitBoard(BitBoard* bBoard){
     printf("\n");
 }
 
+char* generateFEN(GameState * gs, char* FEN){
+    int i = 0;
+    int spaces = 0;
+    for(int rank = 7; rank >= 0; rank--){
+        for(int file = 0; file < 8; file++){
+            Piece currentPiece = gs->squareOccupancy[8 * rank + file];
+            if (currentPiece == no_pce){
+                spaces++;
+            }else{
+                if(spaces != 0){
+                    FEN[i] = '0' + spaces;
+                    i++;
+                }
+                FEN[i] = pieceNumToChar(currentPiece);
+                spaces = 0; 
+                i++;
+            }
+        }
+        if(spaces != 0){
+            FEN[i] = '0' + spaces;
+            i++;
+        }
+        FEN[i] = '/';
+        spaces = 0; 
+        i++; 
+    }
+    i--; 
+    
+    // TURN TO MOVE
+    FEN[i] = ' ';
+    i++;
+    if(gs->whiteToMove){
+        FEN[i] = 'w';
+    }else{
+        FEN[i] = 'b';
+    }
+    i++;
+    
+    //Castling Rights
+    FEN[i] = ' ';
+    i++;
+    if(getBit((BitBoard*)&gs->castlingPrivileges, 3)){
+        FEN[i] = 'K';
+        i++;
+    }
+    if(getBit((BitBoard*)&gs->castlingPrivileges, 2)){
+        FEN[i] = 'Q';
+         i++;
+     }
+    if(getBit((BitBoard*)&gs->castlingPrivileges, 1)){
+        FEN[i] = 'k';
+         i++;
+     }
+    if(getBit((BitBoard*)&gs->castlingPrivileges, 0)){
+        FEN[i] = 'q';
+         i++;
+     }
+    if(FEN[i-1] == ' '){
+        FEN[i] = '-';
+        i++;
+    }
+    
+    //En Passant
+    FEN[i] = ' ';
+    i++;
+    char epSq[3];
+    square_num_to_coords(epSq, gs->enPassantTarget);
+    if(gs->enPassantTarget == no_sqr){
+        FEN[i] = '-';
+        i++;
+    }else{
+        FEN[i] = epSq[0];
+        i++;
+        FEN[i] = epSq[1];
+        i++;
+    }
+    
+    // 50 move ply rule
+    FEN[i] = ' ';
+    i++;
+    if(gs->fiftyMovePly/10){
+        FEN[i] = gs->fiftyMovePly/10 + '0';
+        i++;
+    }
+    FEN[i] = gs->fiftyMovePly % 10 + '0';
+    i++;
+    FEN[i] = ' ';
+    i++;
+    
+    int gameMove = gs->plyNum/2 + 1;
+    
+    if(gameMove/10){
+        FEN[i] = gameMove/10 + '0';
+        i++;
+    }
+    FEN[i] = gameMove % 10 + '0';
+    i++;
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    FEN[i] = '\0';
+    return FEN;
+}
+
+
+int compareGameStates(GameState *gs1, GameState *gs2){
+    
+    for(int i = 0; i < NUM_BOARDS; i++){
+        if(gs1->boards[i] != gs2->boards[i]){
+            return -i - 100; ;
+        }
+    }
+    
+    for(int i = 0; i < 64; i++){
+        if(gs1->squareOccupancy[i] != gs2->squareOccupancy[i]){
+            return i + 100;
+        }
+    }
+    
+    return 0;
+}

@@ -15,7 +15,7 @@
 #include "defs.h"
 
 
-uint64_t Perft(int depth);
+uint64_t Perft(int depth, GameState *gs);
 
 
 #endif /* Perft_h */

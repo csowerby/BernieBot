@@ -50,6 +50,9 @@ typedef struct{
     uint64_t posKey; // Key of position, to be looked up in transposition table.
         // ZOBRIST HASHING
     
+    Move moveHist[10];
+    int moveIndex; 
+    
     uint8_t gameHist[25][3];
     int histIndex;
     
@@ -59,8 +62,8 @@ typedef struct{
 /* --------------- GameState Methods ------------- */
 void init_GameState(GameState *gs, char *fen);
 int updateGameState(GameState *gs, Move*move);
-
-
+char* generateFEN(GameState * gs, char* FEN);
+int compareGameStates(GameState *gs1, GameState *gs2);
 
 /* ------ METHODS FOR PRINTING GAMESTATE -------*/
 void printGameStateInfo(GameState *gs, bool printBitBoards);

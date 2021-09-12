@@ -85,6 +85,7 @@ void moveInput(void){
 
 
 #include "Perft.h"
+#include "GameState.h"
 
 
 
@@ -95,22 +96,50 @@ void moveInput(void){
 
 
 int main(void) {
-    clock_t executionStart = clock();
-    
-
     init();
+    
+    
     GameState gs;
-    init_GameState(&gs,  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    
+    /*
+    init_GameState(&gs, "rnbqkbnr/p1p1pppp/8/Pp1p4/8/8/1PPPPPPP/RNBRKBNR w KQkq b6 0 3");
+    printGameStateInfo(&gs, false);
+    
+    Move *moveList = NULL;
+    int numMoves = moveGen(&moveList, &gs);
 
+    for(int i = 0; i < numMoves; i++){
+        printMoveInfo(&moveList[i]);
+    }
+    
+    */
+    
+    
+    init_GameState(&gs, NULL);
+    
+    GameState testCPY;
+    memcpy(&testCPY, &gs, sizeof(GameState));
+    
+    
 
     
-    //printGameStateInfo(&gs, true);
+    clock_t executionStart = clock();
+    uint64_t nodes = Perft(5, &gs);
+    
+
+    
+
+    printf("Perft Nodes Accessed: %llu\n", nodes);
+
+
     
     
     
     clock_t executionEnd = clock();
     double elapsedTime = (double) (executionEnd - executionStart)/ CLOCKS_PER_SEC;
     printf("Execution finished in %f seconds.\n", elapsedTime);
+     
+     
     return 0;
 }
 
