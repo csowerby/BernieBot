@@ -35,8 +35,15 @@ bool getBit(BitBoard *board, int bitPos){
 uint8_t get_ls1b_pos(BitBoard *board){
     // Using the deBruijin algorithm
     // http://supertech.csail.mit.edu/papers/debruijn.pdf
-    return (uint8_t) DeBruijnBitPosition[((uint64_t)((*board & -(*board)) * debrujin64)) >> 58];
+    //return (uint8_t) DeBruijnBitPosition[((uint64_t)((*board & -(*board)) * debrujin64)) >> 58];
+
+        // I WAS using the deBruijin algorithm, but I decided to use these x86 instructions instead 
+    return __builtin_ffsll(*board)-1;
 }
+
+uint8_t get_num_1b(BitBoard board){
+    return __builtin_popcountll(board);
+};
 
 
 
@@ -238,21 +245,6 @@ void printGameStateInfo(GameState *gs, bool printBitBoards){
         }
     }
     
-    /*
-    // Piece Info/Locations
-    printf("Piece List: \n");
-    for(int pce = 0; pce < 12; pce ++ ){
-        printf("Piece: %s : ", chessPieces[pce]);
-        for (int i = 0; i < 10; i++){
-            if (gs->pceList[pce][i] == no_sqr){
-                break;
-            }
-            char str[3];
-            printf("%s, ", square_num_to_coords(str, gs->pceList[pce][i]));
-        }
-        printf("\n");
-    }
-     */
 
     printf("Move: %i, Ply: %i\n", gs->plyNum/2 + 1, gs->plyNum);
     printf("White To Move?: %i\n", gs->whiteToMove);

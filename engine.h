@@ -13,9 +13,15 @@
 #include "defs.h"
 #include "GameState.h"
 
+
+// Search
+
+Move search(int depth, GameState *gs);
+int negaMax(int depth, GameState* gs);
+
 //Evaluation
 
-int badEvaluation(GameState *gs);
+float naiveEvaluation(GameState *gs);
 
 // Move Making
 int makeMove(GameState *gs, Move move);

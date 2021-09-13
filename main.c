@@ -99,24 +99,27 @@ void moveInput(void){
 
 
 int main(void) {
-    /*
+    
     init();
     
     
     GameState gs;
 
-    //init_GameState(&gs, "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
+    init_GameState(&gs, "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
     
-    init_GameState(&gs, NULL);
-    
+
+    clock_t executionStart = clock();
+    search(5, &gs); 
     
     
     clock_t executionEnd = clock();
     double elapsedTime = (double) (executionEnd - executionStart)/ CLOCKS_PER_SEC;
     printf("Execution finished in %f seconds.\n", elapsedTime);
-    */
     
-    startPerft(5);
+    
+    
+
+
      
     return 0;
 }

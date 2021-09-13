@@ -8,31 +8,94 @@
 
 #include "engine.h"
 
+/* --------------------------------------------------------*/
+/* ------------------ SEARCHING ---------------------------*/
+/* --------------------------------------------------------*/
 
-
-int badEvaluation(GameState *gs){
-    int evaluation = 0;
-    int multiple = 100;
-    for (int i = 0; i < 6; i++){
-        switch (i) {
-            case 1:
-            case 2:
-                multiple = 300;
-                break;
-            case 3:
-                multiple = 500;
-                break;
-            case 4:
-                multiple = 900;
-            default:
-                break;
+Move search(int depth, GameState *gs){
+    
+    double maxScore = INT_MIN;
+    Move bestMove = 0;
+    
+    Move* move_list;
+    
+    int n_moves, i;
+    n_moves = moveGen(&move_list, gs);
+    for(i = 0; i < n_moves; i++){
+        //printMoveInfo(&move_list[i]);
+        int success = makeMove(gs, move_list[i]);
+        //printGameBoard(gs); 
+        if (success != -1){
+            // Move is legal -> call negamax
+            double score = -negaMax(depth - 1, gs);
+            if (score > maxScore){
+                maxScore = score;
+                bestMove = move_list[i];
+            }
         }
-        evaluation += gs->numPieces[i] - gs->numPieces[i + 6];
+        unmakeMove(gs, move_list[i]);
     }
+    printf("Best Move:\n");
+    printMoveInfo(&bestMove);
+    printf("Evaluation: %f\n", maxScore);
+    return bestMove;
+}
+
+
+int negaMax(int depth, GameState *gs){
+    if(depth == 0) return EVALUATE(gs);
+    double maxScore = INT_MIN;
+    
+    //Generate MoveList
+    Move* move_list;
+    int n_moves, i;
+    n_moves = moveGen(&move_list, gs);
+    
+    // Loop Through Moves
+    for(i = 0; i < n_moves; i++){
+        //printMoveInfo(&move_list[i]);
+        int success = makeMove(gs, move_list[i]);
+        if(success != -1){
+            // Legal Move -> Check for score
+            double score = -negaMax(depth - 1, gs);
+            if (score > maxScore){
+                maxScore = score;
+            }
+        }
+
+        unmakeMove(gs, move_list[i]);
+    }
+    free(move_list);
+    return maxScore;
+}
+
+/* ------------------------------------------------------------*/
+/* -------------------------- EVALUATION --------------------- */
+/* ------------------------------------------------------------*/
+float naiveEvaluation(GameState *gs){
+    /* Static evaluation that returns higher score for better move for who is to move */
+    float evaluation;
+    float materialScore = 0;
+    
+    //Material
+    materialScore += 9*(NUMBITS(gs->boards[wQueens]) - NUMBITS(gs->boards[bQueens]));
+    materialScore += 5*(NUMBITS(gs->boards[wRooks]) - NUMBITS(gs->boards[bRooks]));
+    materialScore += 3*(NUMBITS(gs->boards[wBishops]) - NUMBITS(gs->boards[bBishops]));
+    materialScore += 3*(NUMBITS(gs->boards[wKnights]) - NUMBITS(gs->boards[bKnights]));
+    materialScore += 1*(NUMBITS(gs->boards[wPawns]) - NUMBITS(gs->boards[bPawns]));
+    
+    //Structure
+    
+    int sideToMove = -1;
+    if(gs->whiteToMove) sideToMove = 1;
+    evaluation = materialScore * sideToMove;
     return evaluation;
 }
-/* --------------------------   MOVE MAKING METHODS  ------------------------ */
 
+
+/* ------------------------------------------------------------------*/
+/* --------------------------   MOVE MAKING ------------------------ */
+/* ------------------------------------------------------------------*/
 
 int makeMove(GameState *gs, Move move){
     /* Update gamestate with the code :

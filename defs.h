@@ -22,6 +22,9 @@
 
 #include <assert.h>
 #include <string.h>
+#include <limits.h>
+
+
 
 /* ------ DEFINITIONS ----------*/
 
@@ -60,6 +63,16 @@
 #define b_short_castle_squares 0x6000000000000000ULL
 #define b_long_castle_squares 0x0E00000000000000ULL
 
+/* --------- MACRO FUNCTIONS----------*/
+
+//Current evaluation function
+#define EVALUATE(X) naiveEvaluation(X)
+
+// Count number of 1 bits in a BitBoard
+#define NUMBITS(X) __builtin_popcountll(X)
+
+// Index of Least Significant 1 bit (-1 if no 1 bits, i.e. X=0)
+#define LS1B(X) __builtin_ffsll(X)-1
 
 /* ----- deBrujin lookup stuff ------- */
 #define debrujin64 0x022fdd63cc95386dULL
@@ -138,6 +151,7 @@ void clearBit(BitBoard *board, int bitPos);
 void switchBit(BitBoard *board, int bitPos);
 bool getBit(BitBoard *board, int bitPos);
 uint8_t get_ls1b_pos(BitBoard *board);
+uint8_t get_num_1b(BitBoard board); 
 
 /* ----------- INITIALIZATION METHODS ------- */
 
