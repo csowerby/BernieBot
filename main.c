@@ -54,7 +54,9 @@ void moveInput(void){
  
  * Consider in the future using a bitboard for attacked squares - legal move generation instead of PL 
  
- * better to just be passed a bitboard with target Square and origin Squre & 4 digit code? 
+ * better to just be passed a bitboard with target Square and origin Squre & 4 digit code?
+ 
+ * PRETTY SURE IT IS FASTER TO DO PIECE CENTRIC MOVE GENERATION BECAUSE OF SUPER FAST BITBOARD OPERATIONS i.e. encode moves with originPiece, targetSquare? also to move gen function pass just bitboards of each knight/king/sliding/diag piece moves, then use bitwise ops to isolate ls1b bitboard, and apply xor to the bitboards, might not even need 
  */
 
 

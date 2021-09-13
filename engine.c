@@ -159,7 +159,7 @@ int makeMove(GameState *gs, Move move){
             break;
         case 6: // PAWN QUIET MOVE
             originPiece = wPawns + colorToMoveOffset;
-            targetSquare = originSquare + colorToMoveMultiple;
+            targetSquare = originSquare + 8 * colorToMoveMultiple;
             
             // Remove Origin Piece
             switchBit(&gs->boards[originPiece], originSquare);
@@ -260,7 +260,6 @@ int makeMove(GameState *gs, Move move){
             Square enPassantSquare = targetSquare - (8 *colorToMoveMultiple);
             originPiece = wPawns + colorToMoveOffset;
             targetPiece = bPawns - colorToMoveOffset;
-            gs->gameHist[gs->histIndex][captured_piece] = targetPiece;
             
             //Remove Origin Pawn
             switchBit(&gs->boards[originPiece], originSquare);
@@ -352,161 +351,249 @@ int makeMove(GameState *gs, Move move){
 }
 
 int unmakeMove(GameState *gs, Move move){
-    // UNDO MOVE
-    
+    //Revert who is on move
     gs->whiteToMove = !gs->whiteToMove;
     
     // Restore info from history stack
     gs->histIndex--;
-    
     gs->enPassantTarget = gs->gameHist[gs->histIndex][ep_target];
     gs->castlingPrivileges = gs->gameHist[gs->histIndex][castling_rights];
     
-    Square originSquare = move >> 10;
-    Square targetSquare = (move >> 4) & 63;
-    
-    Piece originPiece = gs->squareOccupancy[targetSquare];
-    //TODO: this is wrong ^ if promo origin piece is a pawn
-    Piece targetPiece = gs->gameHist[gs->histIndex][captured_piece];
-    
-    int sidePieces, oppositeSidePieces, colorToMoveOffset;
+    int sidePieces, oppositeSidePieces, colorToMoveOffset, colorToMoveMultiple;
     if(gs->whiteToMove){
         sidePieces = wPieces;
         oppositeSidePieces = bPieces;
         colorToMoveOffset = 0;
+        colorToMoveMultiple = 1;
     }else{
         sidePieces = bPieces;
         oppositeSidePieces = wPieces;
         colorToMoveOffset = 6;
+        colorToMoveMultiple = -1;
     }
+
+    Square targetSquare, originSquare = move>> 10;
+    Piece originPiece, targetPiece;
     
-    // To do for all Moves - Restore originPiece to originSquare
-    gs->squareOccupancy[originSquare] = originPiece;
+    int moveCode = move & 15;
     
-    switchBit(&gs->boards[originPiece], originSquare);
-    switchBit(&gs->boards[sidePieces], originSquare);
-    switchBit(&gs->boards[aPieces], originSquare);
+       switch (moveCode) {
+               // Promo Capture - knight, bishop, rook, queen
+           case 12:
+           case 13:
+           case 14:
+           case 15:
+               targetSquare = (move >> 4) & 63;
+               originPiece = wPawns + colorToMoveOffset;
+               targetPiece = gs->gameHist[gs->histIndex][captured_piece];
+               
+               // Replace Origin Piece
+               switchBit(&gs->boards[originPiece], originSquare);
+               switchBit(&gs->boards[sidePieces], originSquare);
+               switchBit(&gs->boards[aPieces], originSquare);
+               gs->squareOccupancy[originSquare] = originPiece;
+               
+               //Remove Promoted Piece
+               Piece promoPiece = (moveCode & 3) + 1 + colorToMoveOffset;
+               switchBit(&gs->boards[promoPiece], targetSquare);
+               switchBit(&gs->boards[sidePieces], targetSquare);
+               
+               
+               // Replace Target Piece
+               switchBit(&gs->boards[targetPiece], targetSquare);
+               switchBit(&gs->boards[oppositeSidePieces], targetSquare);
+               gs->squareOccupancy[targetSquare] = targetPiece;
+
+               //TODO: - restore fifty move ply from the stack
+               break;
     
-    if(getBit((BitBoard *)&move, 3)){
-        // PROMOTION - 1xxx
-        uint8_t promoPiece = (move & 3) + 1 + colorToMoveOffset;
-        
-        // Remove Promoted Piece
-        switchBit(&gs->boards[promoPiece], targetSquare);
-        switchBit(&gs->boards[sidePieces], targetSquare);
-        
-        if (getBit((BitBoard*)&move, 2)) {
-            // PROMO CAPTURE - 11xx
-            
-            //Replace Captured Piece
-            switchBit(&gs->boards[targetPiece], targetSquare);
-            switchBit(&gs->boards[oppositeSidePieces], targetSquare);
-            gs->squareOccupancy[targetSquare] = targetPiece; 
-            
-        }else{
-            // Non-promo capture, need to update aPieces
-            switchBit(&gs->boards[aPieces], targetSquare);
-            // Set targetSquare to no piece
-            gs->squareOccupancy[targetSquare] = no_pce;
-        }
-                              
-                                               
-    }else{
-        // NON PROMOTION - 0xxx
-        
-        // Remove Moved Piece
-        
-        switchBit(&gs->boards[originPiece], targetSquare);
-        switchBit(&gs->boards[sidePieces], targetSquare);
-        
-        if(getBit((BitBoard*)&move, 2)){
-            // CAPTURE - 01xx
-            if(getBit((BitBoard*)&move, 0)){
-                // EN PASSANT CAPTURE - 0101
-                
-                // Switch bit at targetSquare for aPieces
-                switchBit(&gs->boards[aPieces], targetSquare);
-                
-                // Replace captured piece
-                if(gs->whiteToMove){
-                    switchBit(&gs->boards[bPawns], targetSquare - 8);
-                    switchBit(&gs->boards[oppositeSidePieces], targetSquare - 8);
-                    switchBit(&gs->boards[aPieces], targetSquare - 8);
-                    gs->squareOccupancy[targetSquare - 8] = bPawns;
-                    gs->squareOccupancy[targetSquare] = no_pce;
-                }else{
-                    switchBit(&gs->boards[wPawns], targetSquare + 8);
-                    switchBit(&gs->boards[oppositeSidePieces], targetSquare + 8);
-                    switchBit(&gs->boards[aPieces], targetSquare + 8);
-                    gs->squareOccupancy[targetSquare + 8] = wPawns;
-                    gs->squareOccupancy[targetSquare] = no_pce; 
-                }
-            }else{
-                // REGULAR CAPTURE 0100
-                
-                // Replace captured piece
-                gs->squareOccupancy[targetSquare] = targetPiece; 
-                switchBit(&gs->boards[targetPiece], targetSquare);
-                switchBit(&gs->boards[oppositeSidePieces], targetSquare);
-                
-            }
-        }else{
-            // Non Capture-Non Promo - 00xx
-            
-            // Reset targetSquare to no piece
-            gs->squareOccupancy[targetSquare] = no_pce;
-            // Non capture -> switch targetSquare at aPieces
-            switchBit(&gs->boards[aPieces], targetSquare);
-            
-            if(getBit((BitBoard*)&move, 1)){
-                // CASTLE
-                if(getBit((BitBoard*)&move, 0)){
-                    // LONG CASTLE - 0011
-                    if(gs->whiteToMove){
-                        gs->squareOccupancy[a1] = wRooks;
-                        gs->squareOccupancy[d1] = no_pce;
-                        switchBit(&gs->boards[wRooks], a1);
-                        switchBit(&gs->boards[wRooks], d1);
-                        switchBit(&gs->boards[wPieces], a1);
-                        switchBit(&gs->boards[wPieces], d1);
-                        switchBit(&gs->boards[aPieces], a1);
-                        switchBit(&gs->boards[aPieces], d1);
-                    }else{
-                        gs->squareOccupancy[a8] = bRooks;
-                        gs->squareOccupancy[d8] = no_pce;
-                        switchBit(&gs->boards[bRooks], a8);
-                        switchBit(&gs->boards[bRooks], d8);
-                        switchBit(&gs->boards[bPieces], a8);
-                        switchBit(&gs->boards[bPieces], d8);
-                        switchBit(&gs->boards[aPieces], a8);
-                        switchBit(&gs->boards[aPieces], d8);
-                    }
-                }else{
-                    // SHORT CASTLE - 0010
-                    if(gs->whiteToMove){
-                        gs->squareOccupancy[h1] = wRooks;
-                        gs->squareOccupancy[f1] = no_pce;
-                        switchBit(&gs->boards[wRooks], h1);
-                        switchBit(&gs->boards[wRooks], f1);
-                        switchBit(&gs->boards[wPieces], h1);
-                        switchBit(&gs->boards[wPieces], f1);
-                        switchBit(&gs->boards[aPieces], h1);
-                        switchBit(&gs->boards[aPieces], f1);
-                    }else{
-                        gs->squareOccupancy[h8] = bRooks;
-                        gs->squareOccupancy[f8] = no_pce;
-                        switchBit(&gs->boards[bRooks], h8);
-                        switchBit(&gs->boards[bRooks], f8);
-                        switchBit(&gs->boards[bPieces], h8);
-                        switchBit(&gs->boards[bPieces], f8);
-                        switchBit(&gs->boards[aPieces], h8);
-                        switchBit(&gs->boards[aPieces], f8);
-                    }
-                }
-            }
-        }
-    }
-    
+               // Regular Promos - knight, bishop, rook, queen
+           case 8:
+           case 9:
+           case 10:
+           case 11:
+               targetSquare = originSquare + colorToMoveMultiple;
+               originPiece = wPawns + colorToMoveOffset;
+               // Replace Origin Piece
+               switchBit(&gs->boards[originPiece], originSquare);
+               switchBit(&gs->boards[sidePieces], originSquare);
+               switchBit(&gs->boards[aPieces], originSquare);
+               gs->squareOccupancy[originSquare] = originPiece;
+               
+               //Remove Promoted Piece
+               promoPiece = (moveCode & 3) + 1 + colorToMoveOffset;
+               switchBit(&gs->boards[promoPiece], targetSquare);
+               switchBit(&gs->boards[sidePieces], targetSquare);
+               switchBit(&gs->boards[aPieces], targetSquare);
+               gs->squareOccupancy[targetSquare] = no_sqr;
+               
+               //TODO: restore fifty move ply from the stack
+               break;
+
+           // Quiet Moves
+           case 1: // Double Pawn Push
+               targetSquare = originSquare + 16 * colorToMoveMultiple;
+               originPiece = wPawns + colorToMoveOffset;
+               
+               // Replace Origin Piece at originSquare
+               switchBit(&gs->boards[originPiece], originSquare);
+               switchBit(&gs->boards[sidePieces], originSquare);
+               switchBit(&gs->boards[aPieces], originSquare);
+               gs->squareOccupancy[originSquare] = originPiece;
+               
+               // Remove Moved Piece
+               switchBit(&gs->boards[originPiece], targetSquare);
+               switchBit(&gs->boards[sidePieces], targetSquare);
+               switchBit(&gs->boards[aPieces], targetSquare);
+               gs->squareOccupancy[targetSquare] = no_pce;
+               
+               //TODO: restore fifty move ply from stack
+               break;
+           case 6: // PAWN QUIET MOVE
+               originPiece = wPawns + colorToMoveOffset;
+               targetSquare = originSquare + 8 * colorToMoveMultiple;
+               
+               // Remove Origin Piece
+               switchBit(&gs->boards[originPiece], originSquare);
+               switchBit(&gs->boards[sidePieces], originSquare);
+               switchBit(&gs->boards[aPieces], originSquare);
+               gs->squareOccupancy[originSquare] = originPiece;
+               
+               // Remove Moved Piece
+               switchBit(&gs->boards[originPiece], targetSquare);
+               switchBit(&gs->boards[sidePieces], targetSquare);
+               switchBit(&gs->boards[aPieces], targetSquare);
+               gs->squareOccupancy[targetSquare] = no_pce;
+               
+               //TODO: restore fifty move ply from stack
+               break;
+           case 0: // QuietMove
+               targetSquare = (move >> 4) & 63;
+               originPiece = gs->squareOccupancy[originSquare];
+               // Replace Origin Piece
+               switchBit(&gs->boards[originPiece], originSquare);
+               switchBit(&gs->boards[sidePieces], originSquare);
+               switchBit(&gs->boards[aPieces], originSquare);
+               gs->squareOccupancy[originSquare] = originPiece;
+               
+               // Remove Moved Piece
+               switchBit(&gs->boards[originPiece], targetSquare);
+               switchBit(&gs->boards[sidePieces], targetSquare);
+               switchBit(&gs->boards[aPieces], targetSquare);
+               gs->squareOccupancy[targetSquare] = no_pce;
+               
+               
+               gs->fiftyMovePly--;
+               break;
+           case 2: // Short Castle
+               originPiece = wKings + colorToMoveOffset;
+               targetSquare = originSquare + 2;
+               // Replace Rooks in original positions
+               switchBit(&gs->boards[wRooks + colorToMoveOffset], originSquare + 3);
+               switchBit(&gs->boards[sidePieces], originSquare + 3);
+               switchBit(&gs->boards[aPieces], originSquare + 3);
+               gs->squareOccupancy[originSquare + 3] = wRooks + colorToMoveOffset;
+                   
+               // Remove Rook form castled position
+               switchBit(&gs->boards[wRooks + colorToMoveOffset], originSquare + 1);
+               switchBit(&gs->boards[sidePieces], originSquare + 1);
+               switchBit(&gs->boards[aPieces], originSquare + 1);
+               gs->squareOccupancy[originSquare + 1] = no_pce;
+               
+               // Replace Origin King in original square
+               switchBit(&gs->boards[originPiece], originSquare);
+               switchBit(&gs->boards[sidePieces], originSquare);
+               switchBit(&gs->boards[aPieces], originSquare);
+               gs->squareOccupancy[originSquare] = originPiece;
+               
+               // Remove Moved King
+               switchBit(&gs->boards[originPiece], targetSquare);
+               switchBit(&gs->boards[sidePieces], targetSquare);
+               switchBit(&gs->boards[aPieces], targetSquare);
+               gs->squareOccupancy[targetSquare] = no_pce;
+               
+               gs->fiftyMovePly--;
+               break;
+           case 3: // Long Castle
+               originPiece = wKings + colorToMoveOffset;
+               targetSquare = originSquare - 2;
+               // Replace Rooks in origin Square
+               switchBit(&gs->boards[wRooks + colorToMoveOffset], originSquare - 4 );
+               switchBit(&gs->boards[sidePieces], originSquare - 4);
+               switchBit(&gs->boards[aPieces], originSquare - 4);
+               gs->squareOccupancy[originSquare - 4] = wRooks + colorToMoveOffset;
+                   
+               // Remove Rook from moved squares
+               switchBit(&gs->boards[wRooks + colorToMoveOffset], originSquare - 1);
+               switchBit(&gs->boards[sidePieces], originSquare - 1);
+               switchBit(&gs->boards[aPieces], originSquare - 1);
+               gs->squareOccupancy[originSquare - 1] = no_pce;
+               
+               // Replace Origin King
+               switchBit(&gs->boards[originPiece], originSquare);
+               switchBit(&gs->boards[sidePieces], originSquare);
+               switchBit(&gs->boards[aPieces], originSquare);
+               gs->squareOccupancy[originSquare] = wKings + colorToMoveOffset;
+               
+               // Remove Moved King
+               switchBit(&gs->boards[originPiece], targetSquare);
+               switchBit(&gs->boards[sidePieces], targetSquare);
+               switchBit(&gs->boards[aPieces], targetSquare);
+               gs->squareOccupancy[targetSquare] = no_pce;
+               
+               gs->fiftyMovePly--;
+               break;
+
+           case 5:; // EP Capture
+               targetSquare = (move >> 4) & 63;
+               Square enPassantSquare = targetSquare - (8 *colorToMoveMultiple);
+               originPiece = wPawns + colorToMoveOffset;
+               targetPiece = bPawns - colorToMoveOffset;
+
+               //Replace Origin Pawn
+               switchBit(&gs->boards[originPiece], originSquare);
+               switchBit(&gs->boards[sidePieces], originSquare);
+               switchBit(&gs->boards[aPieces], originSquare);
+               gs->squareOccupancy[originSquare] = originPiece;
+               
+               //Remove Moved Pawn
+               switchBit(&gs->boards[originPiece], targetSquare);
+               switchBit(&gs->boards[sidePieces], targetSquare);
+               switchBit(&gs->boards[aPieces], targetSquare);
+               gs->squareOccupancy[targetSquare] = no_pce;
+               
+               //Replace Captured Pawn
+               switchBit(&gs->boards[targetPiece], enPassantSquare);
+               switchBit(&gs->boards[oppositeSidePieces], enPassantSquare);
+               switchBit(&gs->boards[aPieces], enPassantSquare);
+               gs->squareOccupancy[enPassantSquare] = targetPiece;
+               
+               //TODO: reset fifty move ply from stack
+           case 4: // Regular Capture
+               targetSquare = (move >> 4) & 63;
+               originPiece = gs->squareOccupancy[originSquare];
+               targetPiece = gs->gameHist[gs->histIndex][captured_piece];
+               
+               //Replace origin piece
+               switchBit(&gs->boards[originPiece], originSquare);
+               switchBit(&gs->boards[sidePieces], originSquare);
+               switchBit(&gs->boards[aPieces], originSquare);
+               gs->squareOccupancy[originSquare] = originPiece;
+               
+               // Remove Moved Piece
+               switchBit(&gs->boards[originPiece], targetSquare);
+               switchBit(&gs->boards[sidePieces], targetSquare);
+               switchBit(&gs->boards[aPieces], targetSquare);
+               
+               // Replace captured piece
+               switchBit(&gs->boards[targetPiece], targetSquare);
+               switchBit(&gs->boards[oppositeSidePieces], targetSquare);
+               switchBit(&gs->boards[aPieces], targetSquare);
+               gs->squareOccupancy[targetSquare] = targetPiece;
+               
+               //TODO: reset fifty move ply from stack
+               break;
+       }
 
     // Update Game Ply
     gs->plyNum--;
