@@ -58,6 +58,8 @@ int makeMove(GameState *gs, Move move){
     Square originSquare = move >> 10;
     Square targetSquare = (move >> 4) & 63;
     
+    uint8_t moveCode = move & 15;
+    
     Piece originPiece = gs->squareOccupancy[originSquare];
     Piece targetPiece = gs->squareOccupancy[targetSquare];
     
@@ -87,6 +89,25 @@ int makeMove(GameState *gs, Move move){
     
     //Set EP Square to no_sqr (will be reset to the correct later if necessary
     gs->enPassantTarget = no_sqr;
+    
+    /*
+    switch (moveCode) {
+            // Regular Promos - knight, bishop, rook, queen
+        case 8:
+        case 9:
+        case 10:
+        case 11:
+            // Promo Capture - knight, bishop, rook, queen
+        case 12:
+        case 13:
+        case 14:
+        case 15:
+            break;
+            
+        default:
+            break;
+    }
+    */
     
     
     if(getBit((BitBoard *)&move, 3)){
@@ -153,21 +174,14 @@ int makeMove(GameState *gs, Move move){
             
             // Non capture -> switch targetSquare at aPieces
             switchBit(&gs->boards[aPieces], targetSquare);
-            
-            if(getBit((BitBoard*)&move, 0)){
-                // DOUBLE PAWN PUSH - 0001
-                // Set EnPassant Status
-                if(gs->whiteToMove){
-                    gs->enPassantTarget = targetSquare - 8;
-                }else{
-                    gs->enPassantTarget = targetSquare + 8;
-                }
-            }else if(getBit((BitBoard*)&move, 1)){
+
+            if(getBit((BitBoard*)&move, 1)){
                 // CASTLE
                 if(getBit((BitBoard*)&move, 0)){
                     // LONG CASTLE - 0011
                     if(gs->whiteToMove){
                         gs->squareOccupancy[a1] = no_pce;
+                        gs->squareOccupancy[d1] = wRooks;
                         switchBit(&gs->boards[wRooks], a1);
                         switchBit(&gs->boards[wRooks], d1);
                         switchBit(&gs->boards[wPieces], a1);
@@ -176,10 +190,11 @@ int makeMove(GameState *gs, Move move){
                         switchBit(&gs->boards[aPieces], d1);
                     }else{
                         gs->squareOccupancy[a8] = no_pce;
-                        switchBit(&gs->boards[wRooks], a8);
-                        switchBit(&gs->boards[wRooks], d8);
-                        switchBit(&gs->boards[wPieces], a8);
-                        switchBit(&gs->boards[wPieces], d8);
+                        gs->squareOccupancy[d8] = bRooks;
+                        switchBit(&gs->boards[bRooks], a8);
+                        switchBit(&gs->boards[bRooks], d8);
+                        switchBit(&gs->boards[bPieces], a8);
+                        switchBit(&gs->boards[bPieces], d8);
                         switchBit(&gs->boards[aPieces], a8);
                         switchBit(&gs->boards[aPieces], d8);
                     }
@@ -187,6 +202,7 @@ int makeMove(GameState *gs, Move move){
                     // SHORT CASTLE - 0010
                     if(gs->whiteToMove){
                         gs->squareOccupancy[h1] = no_pce;
+                        gs->squareOccupancy[f1] = wRooks;
                         switchBit(&gs->boards[wRooks], h1);
                         switchBit(&gs->boards[wRooks], f1);
                         switchBit(&gs->boards[wPieces], h1);
@@ -195,13 +211,22 @@ int makeMove(GameState *gs, Move move){
                         switchBit(&gs->boards[aPieces], f1);
                     }else{
                         gs->squareOccupancy[h8] = no_pce;
-                        switchBit(&gs->boards[wRooks], h8);
-                        switchBit(&gs->boards[wRooks], f8);
-                        switchBit(&gs->boards[wPieces], h8);
-                        switchBit(&gs->boards[wPieces], f8);
+                        gs->squareOccupancy[f8] = bRooks;
+                        switchBit(&gs->boards[bRooks], h8);
+                        switchBit(&gs->boards[bRooks], f8);
+                        switchBit(&gs->boards[bPieces], h8);
+                        switchBit(&gs->boards[bPieces], f8);
                         switchBit(&gs->boards[aPieces], h8);
                         switchBit(&gs->boards[aPieces], f8);
                     }
+                }
+            }else if(getBit((BitBoard*)&move, 0)){
+                // DOUBLE PAWN PUSH - 0001
+                // Set EnPassant Status
+                if(gs->whiteToMove){
+                    gs->enPassantTarget = targetSquare - 8;
+                }else{
+                    gs->enPassantTarget = targetSquare + 8;
                 }
             }
         }
@@ -268,6 +293,7 @@ int unmakeMove(GameState *gs, Move move){
     Square targetSquare = (move >> 4) & 63;
     
     Piece originPiece = gs->squareOccupancy[targetSquare];
+    //TODO: this is wrong ^ if promo origin piece is a pawn
     Piece targetPiece = gs->gameHist[gs->histIndex][captured_piece];
     
     int sidePieces, oppositeSidePieces, colorToMoveOffset;
@@ -302,6 +328,7 @@ int unmakeMove(GameState *gs, Move move){
             //Replace Captured Piece
             switchBit(&gs->boards[targetPiece], targetSquare);
             switchBit(&gs->boards[oppositeSidePieces], targetSquare);
+            gs->squareOccupancy[targetSquare] = targetPiece; 
             
         }else{
             // Non-promo capture, need to update aPieces
@@ -364,6 +391,7 @@ int unmakeMove(GameState *gs, Move move){
                     // LONG CASTLE - 0011
                     if(gs->whiteToMove){
                         gs->squareOccupancy[a1] = wRooks;
+                        gs->squareOccupancy[d1] = no_pce;
                         switchBit(&gs->boards[wRooks], a1);
                         switchBit(&gs->boards[wRooks], d1);
                         switchBit(&gs->boards[wPieces], a1);
@@ -372,10 +400,11 @@ int unmakeMove(GameState *gs, Move move){
                         switchBit(&gs->boards[aPieces], d1);
                     }else{
                         gs->squareOccupancy[a8] = bRooks;
-                        switchBit(&gs->boards[wRooks], a8);
-                        switchBit(&gs->boards[wRooks], d8);
-                        switchBit(&gs->boards[wPieces], a8);
-                        switchBit(&gs->boards[wPieces], d8);
+                        gs->squareOccupancy[d8] = no_pce;
+                        switchBit(&gs->boards[bRooks], a8);
+                        switchBit(&gs->boards[bRooks], d8);
+                        switchBit(&gs->boards[bPieces], a8);
+                        switchBit(&gs->boards[bPieces], d8);
                         switchBit(&gs->boards[aPieces], a8);
                         switchBit(&gs->boards[aPieces], d8);
                     }
@@ -383,6 +412,7 @@ int unmakeMove(GameState *gs, Move move){
                     // SHORT CASTLE - 0010
                     if(gs->whiteToMove){
                         gs->squareOccupancy[h1] = wRooks;
+                        gs->squareOccupancy[f1] = no_pce;
                         switchBit(&gs->boards[wRooks], h1);
                         switchBit(&gs->boards[wRooks], f1);
                         switchBit(&gs->boards[wPieces], h1);
@@ -391,10 +421,11 @@ int unmakeMove(GameState *gs, Move move){
                         switchBit(&gs->boards[aPieces], f1);
                     }else{
                         gs->squareOccupancy[h8] = bRooks;
-                        switchBit(&gs->boards[wRooks], h8);
-                        switchBit(&gs->boards[wRooks], f8);
-                        switchBit(&gs->boards[wPieces], h8);
-                        switchBit(&gs->boards[wPieces], f8);
+                        gs->squareOccupancy[f8] = no_pce;
+                        switchBit(&gs->boards[bRooks], h8);
+                        switchBit(&gs->boards[bRooks], f8);
+                        switchBit(&gs->boards[bPieces], h8);
+                        switchBit(&gs->boards[bPieces], f8);
                         switchBit(&gs->boards[aPieces], h8);
                         switchBit(&gs->boards[aPieces], f8);
                     }
@@ -443,6 +474,10 @@ int inCheck(Square kingPos, GameState* gs){
         // Black To Move
         
         // Rooks and Queens
+        //BitBoard board1 = getRookMoveBoard(kingPos, gs);
+        //BitBoard board2 =(gs->boards[wRooks] | gs->boards[wQueens]);
+        //printBitBoard(&board2);
+        //printBitBoard(&board1); 
         if(getRookMoveBoard(kingPos, gs) & (gs->boards[wRooks] | gs->boards[wQueens])){
             return 1;
         }
@@ -538,7 +573,7 @@ int moveGen(Move **totalMoveList, GameState *gs){
     }else{
         if(!inCheck(e8, gs)){
             // Check if not in Check
-            if(getBit((BitBoard*)&gs->castlingPrivileges, 2)){
+            if(getBit((BitBoard*)&gs->castlingPrivileges, 0)){
                 // Check if Black Short Castling Privileges
                 if (!(b_short_castle_squares & gs->boards[aPieces])){
                     // No Pieces in the way

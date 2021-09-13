@@ -55,10 +55,10 @@
 #define notHFile 0x7F7F7F7F7F7F7F7FULL
 
 #define w_short_castle_squares 0x0000000000000060ULL
-#define w_long_castle_squares 0x0000000000000007ULL
+#define w_long_castle_squares 0x000000000000000EULL
 
 #define b_short_castle_squares 0x6000000000000000ULL
-#define b_long_castle_squares 0x0700000000000000ULL
+#define b_long_castle_squares 0x0E00000000000000ULL
 
 
 /* ----- deBrujin lookup stuff ------- */

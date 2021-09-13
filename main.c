@@ -49,9 +49,10 @@ void moveInput(void){
   * Zobrist hashing not super important -> implement for transposition table.
   * Move history? Is this necessary? 
  
-  * magic bitboards for move generation?
  
- * for performance - switch any function passing less than 8 bytes to passing the actual object rather than a pointer 
+ * for performance - switch any function passing less than 8 bytes to passing the actual object rather than a pointer
+ 
+ * Consider in the future using a bitboard for attacked squares - legal move generation instead of PL 
  
  
  */
@@ -100,35 +101,16 @@ int main(void) {
     
     
     GameState gs;
-    
-    /*
-    init_GameState(&gs, "rnbqkbnr/p1p1pppp/8/Pp1p4/8/8/1PPPPPPP/RNBRKBNR w KQkq b6 0 3");
-    printGameStateInfo(&gs, false);
-    
-    Move *moveList = NULL;
-    int numMoves = moveGen(&moveList, &gs);
 
-    for(int i = 0; i < numMoves; i++){
-        printMoveInfo(&moveList[i]);
-    }
+    init_GameState(&gs, "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
     
-    */
-    
-    
-    init_GameState(&gs, NULL);
-    
-    GameState testCPY;
-    memcpy(&testCPY, &gs, sizeof(GameState));
+    //init_GameState(&gs, NULL);
     
     
 
     
     clock_t executionStart = clock();
-    uint64_t nodes = Perft(5, &gs);
-    
-
-    
-
+    uint64_t nodes = Perft(2, &gs);
     printf("Perft Nodes Accessed: %llu\n", nodes);
 
 

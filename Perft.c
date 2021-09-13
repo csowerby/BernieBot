@@ -69,7 +69,6 @@ int checkIfGameStateConsistent(GameState *gs){
 
 uint64_t Perft(int depth, GameState* gs){
     
-    
     Move* move_list = NULL;
     int n_moves, i;
     uint64_t nodes = 0;
@@ -77,40 +76,42 @@ uint64_t Perft(int depth, GameState* gs){
     if (depth == 0)
         return 1ULL;
     
+    GameState tempGS;
+    memcpy(&tempGS, gs, sizeof(GameState));
+    
     n_moves = moveGen(&move_list, gs);
-    
-    //GameState tempGS;
-    //memcpy(&tempGS, gs, sizeof(GameState));
-    
+    /*
+    for(int i = 0; i < n_moves; i++){
+        printMoveInfo(&move_list[i]);
+    }
+    */
     
     for (i = 0; i < n_moves; i++) {
         // Loop through and make all the moves
-
-        Move currentMove = move_list[i];
-    
+        
+        printMoveInfo(&move_list[i]);
+        
         int success = makeMove(gs, move_list[i]);
-
+        
+        printGameBoard(gs);
+        
         if (success != -1){
             nodes += Perft(depth - 1, gs);
         }
         
         unmakeMove(gs, move_list[i]);
         
-        //int testGS = compareGameStates(gs, &tempGS);
-        /*
+        int testGS = compareGameStates(gs, &tempGS);
+        
         if(testGS != 0){
             printf("ERROR CODE: %i\n", testGS);
             printf("ORIGINAL GAMESTATE:\n");
             printGameStateInfo(&tempGS, true);
             printf("MODIFIED GAMESTATE: \n");
             printGameStateInfo(gs, true);
-            printf("MOVE:\n");
-            printMoveInfo(&currentMove);
             assert(false);
             
         }
-         */
-
     }
     free(move_list);
     return nodes;
