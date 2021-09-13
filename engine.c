@@ -111,6 +111,22 @@ int makeMove(GameState *gs, Move move){
             
             gs->fiftyMovePly = 0;
             gs->enPassantTarget = no_sqr;
+            
+            // Castling Privileges
+            switch (targetSquare) {
+                case a1:
+                    clearBit((BitBoard*)&gs->castlingPrivileges, 2); // white long castle
+                    break;
+                case a8:
+                    clearBit((BitBoard*)&gs->castlingPrivileges, 0); // black long castle
+                case h1:
+                    clearBit((BitBoard*)&gs->castlingPrivileges, 3); // white short castle
+                case h8:
+                    clearBit((BitBoard*)&gs->castlingPrivileges, 1); // black short castle
+                    break;
+                default:
+                    break;
+            }
             break;
  
             // Regular Promos - knight, bishop, rook, queen
@@ -118,7 +134,7 @@ int makeMove(GameState *gs, Move move){
         case 9:
         case 10:
         case 11:
-            targetSquare = originSquare + colorToMoveMultiple;
+            targetSquare = originSquare + (8 * colorToMoveMultiple);
             originPiece = wPawns + colorToMoveOffset;
             // Remove Origin Piece
             switchBit(&gs->boards[originPiece], originSquare);
@@ -139,7 +155,7 @@ int makeMove(GameState *gs, Move move){
 
         // Quiet Moves
         case 1: // Double Pawn Push
-            targetSquare = originSquare + 16 * colorToMoveMultiple;
+            targetSquare = originSquare + (16 * colorToMoveMultiple);
             originPiece = wPawns + colorToMoveOffset;
             gs->enPassantTarget = (originSquare + targetSquare)/2;
             
@@ -280,6 +296,7 @@ int makeMove(GameState *gs, Move move){
             gs->squareOccupancy[enPassantSquare] = no_pce;
             
             gs->fiftyMovePly = 0;
+            break;
         case 4: // Regular Capture
             targetSquare = (move >> 4) & 63;
             originPiece = gs->squareOccupancy[originSquare];
@@ -304,13 +321,30 @@ int makeMove(GameState *gs, Move move){
             gs->squareOccupancy[targetSquare] = originPiece;
             
             gs->fiftyMovePly = 0;
+            
+            switch (targetSquare) {
+                case a1:
+                    clearBit((BitBoard*)&gs->castlingPrivileges, 2); // white long castle
+                    break;
+                case a8:
+                    clearBit((BitBoard*)&gs->castlingPrivileges, 0); // black long castle
+                case h1:
+                    clearBit((BitBoard*)&gs->castlingPrivileges, 3); // white short castle
+                case h8:
+                    clearBit((BitBoard*)&gs->castlingPrivileges, 1); // black short castle
+                    break;
+                default:
+                    break;
+            }
+            
             break;
     }
 
     // Update Game Ply
     gs->plyNum++;
     
-    // Update Castling Priviledges
+    // Update Castling Priviledges\
+    //TODO: if a rook is captured also update castling privilegs
     switch (originSquare) {
         case e1:
             clearBit((BitBoard*)&gs->castlingPrivileges, 2); // white long castle
@@ -326,7 +360,7 @@ int makeMove(GameState *gs, Move move){
             clearBit((BitBoard*)&gs->castlingPrivileges, 0); // black long castle
             break;
         case h8:
-            clearBit((BitBoard*)&gs->castlingPrivileges, 1); // white short castle
+            clearBit((BitBoard*)&gs->castlingPrivileges, 1); // black short castle
         case e8:
             clearBit((BitBoard*)&gs->castlingPrivileges, 0); // white long castle
             clearBit((BitBoard*)&gs->castlingPrivileges, 1); // white short castle
@@ -335,10 +369,12 @@ int makeMove(GameState *gs, Move move){
         default:
             break;
     }
+
     
     gs->histIndex++;
 
     // Check if position Legal
+    
     Square kingPos = get_ls1b_pos(&gs->boards[wKings + colorToMoveOffset]);
     if (inCheck(kingPos, gs)){
         gs->whiteToMove = !gs->whiteToMove;
@@ -412,7 +448,7 @@ int unmakeMove(GameState *gs, Move move){
            case 9:
            case 10:
            case 11:
-               targetSquare = originSquare + colorToMoveMultiple;
+               targetSquare = originSquare + (8* colorToMoveMultiple);
                originPiece = wPawns + colorToMoveOffset;
                // Replace Origin Piece
                switchBit(&gs->boards[originPiece], originSquare);
@@ -425,7 +461,7 @@ int unmakeMove(GameState *gs, Move move){
                switchBit(&gs->boards[promoPiece], targetSquare);
                switchBit(&gs->boards[sidePieces], targetSquare);
                switchBit(&gs->boards[aPieces], targetSquare);
-               gs->squareOccupancy[targetSquare] = no_sqr;
+               gs->squareOccupancy[targetSquare] = no_pce;
                
                //TODO: restore fifty move ply from the stack
                break;
@@ -469,7 +505,7 @@ int unmakeMove(GameState *gs, Move move){
                break;
            case 0: // QuietMove
                targetSquare = (move >> 4) & 63;
-               originPiece = gs->squareOccupancy[originSquare];
+               originPiece = gs->squareOccupancy[targetSquare];
                // Replace Origin Piece
                switchBit(&gs->boards[originPiece], originSquare);
                switchBit(&gs->boards[sidePieces], originSquare);
@@ -569,9 +605,10 @@ int unmakeMove(GameState *gs, Move move){
                gs->squareOccupancy[enPassantSquare] = targetPiece;
                
                //TODO: reset fifty move ply from stack
+               break; 
            case 4: // Regular Capture
                targetSquare = (move >> 4) & 63;
-               originPiece = gs->squareOccupancy[originSquare];
+               originPiece = gs->squareOccupancy[targetSquare];
                targetPiece = gs->gameHist[gs->histIndex][captured_piece];
                
                //Replace origin piece

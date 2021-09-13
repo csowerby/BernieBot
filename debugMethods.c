@@ -19,103 +19,35 @@
 
 
 
-/* FAILED PERFT
+
+/* --------------- PERFT SPEED TEST ------------------------------*/
+
+printf("Starting Perft...\n");
+
+uint64_t moveGen = 0;
+uint64_t moveMaking = 0;
+uint64_t moveUnmaking = 0;
+uint64_t abortedMoves = 0;
+
+
+
+
+clock_t executionStart = clock();
+uint64_t nodes = Perft_speedtest(5, &gs, &moveGen, &moveMaking, &moveUnmaking, &abortedMoves);
+printf("Perft Nodes Accessed: %llu\n", nodes);
+
+printf("Generating Moves: %llu\n", moveGen);
+printf("Making Moves: %llu\n", moveMaking);
+printf("Unmaking Moves: %llu\n", moveUnmaking);
+printf("# of Aborted Moves: %llu\n", abortedMoves);
+
+
+
+
+clock_t executionEnd = clock();
+double elapsedTime = (double) (executionEnd - executionStart)/ CLOCKS_PER_SEC;
+printf("Execution finished in %f seconds.\n", elapsedTime);
  
-
- uint64_t Perft(int depth, GameState* gs){
-     
-     gs->moveIndex = 0;
-     
-     int test = checkIfGameStateConsistent(gs);
-     assert(test == 0);
-     
-     Move* move_list = NULL;
-     int n_moves, i;
-     uint64_t nodes = 0;
-
-     if (depth == 0)
-         return 1ULL;
-     
-     //printGameStateInfo(gs, false);
-     //printGameBoard(gs);
-     
-     char gamestateFEN[200] = "";
-     generateFEN(gs, gamestateFEN);
-     
-     n_moves = moveGen(&move_list, gs);
-
-     for(int i = 0; i < n_moves; i++){
-         //printMoveInfo(&move_list[i]);
-     }
-
-     
-     for (i = 0; i < n_moves; i++) {
-         //printMoveInfo(&move_list[i]);
-         
-         GameState tempGS;
-         memcpy(&tempGS, &gs, sizeof(GameState));
-         //printf("%s\n", gamestateFEN);
-         
-         Move currentMove = move_list[i];
-         Square originSquare = 15 &(currentMove >> 10);
-         Piece attackingPiece = gs->squareOccupancy[originSquare];
-         
-         
-         //printGameStateInfo(gs, false);
-         gs->moveHist[gs->moveIndex] = move_list[i];
-         gs->moveIndex++;
-         int success = makeMove(gs, move_list[i]);
-         
-         test = checkIfGameStateConsistent(gs);
-         if (test != 0){
-             printf("FEN: %s\n", gamestateFEN);
-             printf("attacking piece: %i\n", attackingPiece);
-             printMoveInfo(&currentMove);
-             printGameStateInfo(gs, true);
-         }
-         assert(test == 0);
-         
-         //printGameStateInfo(gs, false);
-         if (success != -1){
-             nodes += Perft(depth - 1, gs);
-         }
-         
-         
-         char gamestateFEN2[200] = "";
-         generateFEN(gs, gamestateFEN2);
-         //printf("%s\n", gamestateFEN2);
-         
-         
-         unmakeMove(gs, move_list[i]);
-         
-         gs->moveIndex--;
-         gs->moveHist[gs->moveIndex] = 0b0000000000000000;
-         
-         int testGS2 = compareGameStates(gs, &tempGS);
-         
-         if(testGS2 != 0){
-             printf("ERROR CODE: %i\n", testGS2);
-             printf("ORIGINAL GAMESTATE:\n");
-             printGameStateInfo(&tempGS, true);
-             printf("MODIFIED GAMESTATE: \n");
-             printGameStateInfo(gs, true);
-             printf("MOVE:\n");
-             printMoveInfo(&currentMove);
-             assert(false);
-             
-         }
-
-         
-         test = checkIfGameStateConsistent(gs);
-         assert(test == 0);
-         
-         //printGameStateInfo(gs, true);
-     }
-     return nodes;
- }
-
- 
- */
 
 /* --------------- MAKE MOVE TESTING -----------------------------*/
 

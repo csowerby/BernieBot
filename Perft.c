@@ -67,8 +67,68 @@ int checkIfGameStateConsistent(GameState *gs){
 }
 
 
-uint64_t Perft(int depth, GameState* gs){
+
+uint64_t Perft(int depth, GameState *gs){
+    // SPEED VERSION
+    Move* move_list = NULL;
+    int n_moves, i;
+    uint64_t nodes = 0;
+    if (depth == 0){
+        return 1ULL;
+    }
     
+    n_moves = moveGen(&move_list, gs);
+    
+    for(i = 0; i < n_moves; i++){
+        int success = makeMove(gs, move_list[i]);
+        if(success != -1){
+            nodes += Perft(depth - 1, gs);
+        }
+        unmakeMove(gs, move_list[i]);
+    }
+    free(move_list);
+    return nodes;
+}
+
+
+uint64_t Perft_speedtest(int depth, GameState *gs, uint64_t* moveGeneration, uint64_t* moveMaking, uint64_t* moveUnmaking, uint64_t* abortedMoves ){
+    // SPEED VERSION
+    Move* move_list = NULL;
+    int n_moves, i;
+    uint64_t nodes = 0;
+    if (depth == 0){
+        return 1ULL;
+    }
+    clock_t start = clock();
+    n_moves = moveGen(&move_list, gs);
+    clock_t finish = clock();
+    *moveGeneration += finish-start;
+    
+    for(i = 0; i < n_moves; i++){
+        start = clock();
+        int success = makeMove(gs, move_list[i]);
+        finish = clock();
+        *moveMaking += finish-start;
+        
+        if(success != -1){
+            nodes += Perft_speedtest(depth - 1, gs, moveGeneration, moveMaking, moveUnmaking, abortedMoves);
+        }else{
+            *abortedMoves += 1; 
+        }
+
+        
+        start = clock();
+        unmakeMove(gs, move_list[i]);
+        finish = clock();
+        *moveUnmaking += finish - start; 
+    }
+    free(move_list);
+    return nodes;
+}
+
+
+uint64_t Perft_debug(int depth, GameState *gs){
+    // DEBUGGING VERSION
     Move* move_list = NULL;
     int n_moves, i;
     uint64_t nodes = 0;
@@ -93,10 +153,10 @@ uint64_t Perft(int depth, GameState* gs){
         
         int success = makeMove(gs, move_list[i]);
         
-        printGameBoard(gs);
+        printGameStateInfo(gs, true);
         
         if (success != -1){
-            nodes += Perft(depth - 1, gs);
+            nodes += Perft_debug(depth - 1, gs);
         }
         
         unmakeMove(gs, move_list[i]);
@@ -105,6 +165,8 @@ uint64_t Perft(int depth, GameState* gs){
         
         if(testGS != 0){
             printf("ERROR CODE: %i\n", testGS);
+            printf("MOVE: \n");
+            printMoveInfo(&move_list[i]);
             printf("ORIGINAL GAMESTATE:\n");
             printGameStateInfo(&tempGS, true);
             printf("MODIFIED GAMESTATE: \n");
@@ -115,4 +177,28 @@ uint64_t Perft(int depth, GameState* gs){
     }
     free(move_list);
     return nodes;
+}
+
+void startPerft(int depth){
+    init();
+    GameState gs;
+    init_GameState(&gs, NULL);
+    printf("Starting Perft...\n");
+    
+
+
+    clock_t executionStart = clock();
+    uint64_t nodes = Perft(depth, &gs);
+    printf("Perft Nodes Accessed: %llu\n", nodes);
+
+    clock_t executionEnd = clock();
+    double elapsedTime = (double) (executionEnd - executionStart)/ CLOCKS_PER_SEC;
+    printf("Execution finished in %f seconds.\n", elapsedTime);
+    
+    uint64_t nps = nodes/elapsedTime;
+    double Mnps = nps/1000000.0;
+    
+    printf("Nodes per second (approx): %.2f Mnps\n", Mnps);
+    
+     
 }
