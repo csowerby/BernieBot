@@ -54,7 +54,7 @@ void moveInput(void){
  
  * Consider in the future using a bitboard for attacked squares - legal move generation instead of PL 
  
- 
+ * better to just be passed a bitboard with target Square and origin Squre & 4 digit code? 
  */
 
 

@@ -53,228 +53,301 @@ int makeMove(GameState *gs, Move move){
      0101 - en passant
          */
     
-    /* TODO: When revising this section, consider that the switchBit function is its own inverse, and the code to make/unmake moves could almost be the same code */
     
-    Square originSquare = move >> 10;
-    Square targetSquare = (move >> 4) & 63;
+
+    Piece originPiece, targetPiece;
+    Square targetSquare, originSquare = move >>10;
     
     uint8_t moveCode = move & 15;
     
-    Piece originPiece = gs->squareOccupancy[originSquare];
-    Piece targetPiece = gs->squareOccupancy[targetSquare];
     
-    int sidePieces, oppositeSidePieces, colorToMoveOffset;
+    int sidePieces, oppositeSidePieces, colorToMoveOffset, colorToMoveMultiple;
     if(gs->whiteToMove){
         sidePieces = wPieces;
         oppositeSidePieces = bPieces;
         colorToMoveOffset = 0;
+        colorToMoveMultiple = 1;
     }else{
         sidePieces = bPieces;
         oppositeSidePieces = wPieces;
         colorToMoveOffset = 6;
+        colorToMoveMultiple = -1; 
     }
     
     // Add info to Hist
     gs->gameHist[gs->histIndex][castling_rights] = gs->castlingPrivileges;
     gs->gameHist[gs->histIndex][ep_target] = gs->enPassantTarget;
-    gs->gameHist[gs->histIndex][captured_piece] = targetPiece;
+
     
-    
-    // To do for all Moves - Remove originPiece from originSquare
-    gs->squareOccupancy[originSquare] = no_pce;
-    
-    switchBit(&gs->boards[originPiece], originSquare);
-    switchBit(&gs->boards[sidePieces], originSquare);
-    switchBit(&gs->boards[aPieces], originSquare);
     
     //Set EP Square to no_sqr (will be reset to the correct later if necessary
     gs->enPassantTarget = no_sqr;
     
-    /*
     switch (moveCode) {
-            // Regular Promos - knight, bishop, rook, queen
-        case 8:
-        case 9:
-        case 10:
-        case 11:
             // Promo Capture - knight, bishop, rook, queen
         case 12:
         case 13:
         case 14:
         case 15:
+            targetSquare = (move >> 4) & 63;
+            originPiece = wPawns + colorToMoveOffset;
+            targetPiece = gs->squareOccupancy[targetSquare];
+            gs->gameHist[gs->histIndex][captured_piece] = targetPiece;
+            // Remove Origin Piece
+            switchBit(&gs->boards[originPiece], originSquare);
+            switchBit(&gs->boards[sidePieces], originSquare);
+            switchBit(&gs->boards[aPieces], originSquare);
+            gs->squareOccupancy[originSquare] = no_pce;
+            
+            // Remove Target Piece
+            switchBit(&gs->boards[targetPiece], targetSquare);
+            switchBit(&gs->boards[oppositeSidePieces], targetSquare);
+            
+            //Add Promoted Piece
+            Piece promoPiece = (moveCode & 3) + 1 + colorToMoveOffset;
+            switchBit(&gs->boards[promoPiece], targetSquare);
+            switchBit(&gs->boards[sidePieces], targetSquare);
+            gs->squareOccupancy[targetSquare] = promoPiece;
+            
+            gs->fiftyMovePly = 0;
+            gs->enPassantTarget = no_sqr;
+            break;
+ 
+            // Regular Promos - knight, bishop, rook, queen
+        case 8:
+        case 9:
+        case 10:
+        case 11:
+            targetSquare = originSquare + colorToMoveMultiple;
+            originPiece = wPawns + colorToMoveOffset;
+            // Remove Origin Piece
+            switchBit(&gs->boards[originPiece], originSquare);
+            switchBit(&gs->boards[sidePieces], originSquare);
+            switchBit(&gs->boards[aPieces], originSquare);
+            gs->squareOccupancy[originSquare] = no_pce;
+            
+            //Add Promoted Piece
+            promoPiece = (moveCode & 3) + 1 + colorToMoveOffset;
+            switchBit(&gs->boards[promoPiece], targetSquare);
+            switchBit(&gs->boards[sidePieces], targetSquare);
+            switchBit(&gs->boards[aPieces], targetSquare);
+            gs->squareOccupancy[targetSquare] = promoPiece;
+            
+            gs->fiftyMovePly = 0;
+            gs->enPassantTarget = no_sqr;
+            break;
+
+        // Quiet Moves
+        case 1: // Double Pawn Push
+            targetSquare = originSquare + 16 * colorToMoveMultiple;
+            originPiece = wPawns + colorToMoveOffset;
+            gs->enPassantTarget = (originSquare + targetSquare)/2;
+            
+            // Remove Origin Piece
+            switchBit(&gs->boards[originPiece], originSquare);
+            switchBit(&gs->boards[sidePieces], originSquare);
+            switchBit(&gs->boards[aPieces], originSquare);
+            gs->squareOccupancy[originSquare] = no_pce;
+            
+            // Add Moved Piece
+            switchBit(&gs->boards[originPiece], targetSquare);
+            switchBit(&gs->boards[sidePieces], targetSquare);
+            switchBit(&gs->boards[aPieces], targetSquare);
+            gs->squareOccupancy[targetSquare] = originPiece;
+            
+            gs->fiftyMovePly = 0;
+            break;
+        case 6: // PAWN QUIET MOVE
+            originPiece = wPawns + colorToMoveOffset;
+            targetSquare = originSquare + colorToMoveMultiple;
+            
+            // Remove Origin Piece
+            switchBit(&gs->boards[originPiece], originSquare);
+            switchBit(&gs->boards[sidePieces], originSquare);
+            switchBit(&gs->boards[aPieces], originSquare);
+            gs->squareOccupancy[originSquare] = no_pce;
+            
+            // Add Moved Piece
+            switchBit(&gs->boards[originPiece], targetSquare);
+            switchBit(&gs->boards[sidePieces], targetSquare);
+            switchBit(&gs->boards[aPieces], targetSquare);
+            gs->squareOccupancy[targetSquare] = originPiece;
+            
+            gs->enPassantTarget = no_sqr;
+            gs->fiftyMovePly = 0;
+            break;
+        case 0: // QuietMove
+            targetSquare = (move >> 4) & 63;
+            originPiece = gs->squareOccupancy[originSquare];
+            // Remove Origin Piece
+            switchBit(&gs->boards[originPiece], originSquare);
+            switchBit(&gs->boards[sidePieces], originSquare);
+            switchBit(&gs->boards[aPieces], originSquare);
+            gs->squareOccupancy[originSquare] = no_pce;
+            
+            // Add Moved Piece
+            switchBit(&gs->boards[originPiece], targetSquare);
+            switchBit(&gs->boards[sidePieces], targetSquare);
+            switchBit(&gs->boards[aPieces], targetSquare);
+            gs->squareOccupancy[targetSquare] = originPiece;
+            
+            gs->fiftyMovePly++;
+            gs->enPassantTarget = no_sqr;
+            break;
+        case 2: // Short Castle
+            originPiece = wKings + colorToMoveOffset;
+            targetSquare = originSquare + 2;
+            // Remove Rooks
+            switchBit(&gs->boards[wRooks + colorToMoveOffset], originSquare + 3);
+            switchBit(&gs->boards[sidePieces], originSquare + 3);
+            switchBit(&gs->boards[aPieces], originSquare + 3);
+            gs->squareOccupancy[originSquare + 3] = no_pce;
+                
+            // Add Rook
+            switchBit(&gs->boards[wRooks + colorToMoveOffset], originSquare + 1);
+            switchBit(&gs->boards[sidePieces], originSquare + 1);
+            switchBit(&gs->boards[aPieces], originSquare + 1);
+            gs->squareOccupancy[originSquare + 1] = wRooks + colorToMoveOffset;
+            
+            // Remove Origin King
+            switchBit(&gs->boards[originPiece], originSquare);
+            switchBit(&gs->boards[sidePieces], originSquare);
+            switchBit(&gs->boards[aPieces], originSquare);
+            gs->squareOccupancy[originSquare] = no_pce;
+            
+            // Add Moved King
+            switchBit(&gs->boards[originPiece], targetSquare);
+            switchBit(&gs->boards[sidePieces], targetSquare);
+            switchBit(&gs->boards[aPieces], targetSquare);
+            gs->squareOccupancy[targetSquare] = originPiece;
+            
+            gs->fiftyMovePly++;
+            gs->enPassantTarget = no_sqr;
+            break;
+        case 3: // Long Castle
+            originPiece = wKings + colorToMoveOffset;
+            targetSquare = originSquare - 2;
+            // Remove Rooks
+            switchBit(&gs->boards[wRooks + colorToMoveOffset], originSquare - 4 );
+            switchBit(&gs->boards[sidePieces], originSquare - 4);
+            switchBit(&gs->boards[aPieces], originSquare - 4);
+            gs->squareOccupancy[originSquare - 4] = no_pce;
+                
+            // Add Rook
+            switchBit(&gs->boards[wRooks + colorToMoveOffset], originSquare - 1);
+            switchBit(&gs->boards[sidePieces], originSquare - 1);
+            switchBit(&gs->boards[aPieces], originSquare - 1);
+            gs->squareOccupancy[originSquare - 1] = wRooks + colorToMoveOffset;
+            
+            // Remove Origin King
+            switchBit(&gs->boards[originPiece], originSquare);
+            switchBit(&gs->boards[sidePieces], originSquare);
+            switchBit(&gs->boards[aPieces], originSquare);
+            gs->squareOccupancy[originSquare] = no_pce;
+            
+            // Add Moved King
+            switchBit(&gs->boards[originPiece], targetSquare);
+            switchBit(&gs->boards[sidePieces], targetSquare);
+            switchBit(&gs->boards[aPieces], targetSquare);
+            gs->squareOccupancy[targetSquare] = originPiece;
+            
+            gs->fiftyMovePly++;
+            gs->enPassantTarget = no_sqr;
+            break;
+
+        case 5:; // EP Capture
+            targetSquare = (move >> 4) & 63;
+            Square enPassantSquare = targetSquare - (8 *colorToMoveMultiple);
+            originPiece = wPawns + colorToMoveOffset;
+            targetPiece = bPawns - colorToMoveOffset;
+            gs->gameHist[gs->histIndex][captured_piece] = targetPiece;
+            
+            //Remove Origin Pawn
+            switchBit(&gs->boards[originPiece], originSquare);
+            switchBit(&gs->boards[sidePieces], originSquare);
+            switchBit(&gs->boards[aPieces], originSquare);
+            gs->squareOccupancy[originSquare] = no_pce;
+            
+            //Add Moved Pawn
+            switchBit(&gs->boards[originPiece], targetSquare);
+            switchBit(&gs->boards[sidePieces], targetSquare);
+            switchBit(&gs->boards[aPieces], targetSquare);
+            gs->squareOccupancy[targetSquare] = originPiece;
+            
+            //Remove Captured Pawn
+            switchBit(&gs->boards[targetPiece], enPassantSquare);
+            switchBit(&gs->boards[oppositeSidePieces], enPassantSquare);
+            switchBit(&gs->boards[aPieces], enPassantSquare);
+            gs->squareOccupancy[enPassantSquare] = no_pce;
+            
+            gs->fiftyMovePly = 0;
+        case 4: // Regular Capture
+            targetSquare = (move >> 4) & 63;
+            originPiece = gs->squareOccupancy[originSquare];
+            targetPiece = gs->squareOccupancy[targetSquare];
+            gs->gameHist[gs->histIndex][captured_piece] = targetPiece;
+            
+            //Remove origin piece
+            switchBit(&gs->boards[originPiece], originSquare);
+            switchBit(&gs->boards[sidePieces], originSquare);
+            switchBit(&gs->boards[aPieces], originSquare);
+            gs->squareOccupancy[originSquare] = no_pce;
+            
+            // Remove captured piece
+            switchBit(&gs->boards[targetPiece], targetSquare);
+            switchBit(&gs->boards[oppositeSidePieces], targetSquare);
+            switchBit(&gs->boards[aPieces], targetSquare);
+            
+            // Add Moved Piece
+            switchBit(&gs->boards[originPiece], targetSquare);
+            switchBit(&gs->boards[sidePieces], targetSquare);
+            switchBit(&gs->boards[aPieces], targetSquare);
+            gs->squareOccupancy[targetSquare] = originPiece;
+            
+            gs->fiftyMovePly = 0;
+            break;
+    }
+
+    // Update Game Ply
+    gs->plyNum++;
+    
+    // Update Castling Priviledges
+    switch (originSquare) {
+        case e1:
+            clearBit((BitBoard*)&gs->castlingPrivileges, 2); // white long castle
+            clearBit((BitBoard*)&gs->castlingPrivileges, 3); // white short castle
+            break;
+        case a1:
+            clearBit((BitBoard*)&gs->castlingPrivileges, 2); // white long castle
+            break;
+        case h1:
+            clearBit((BitBoard*)&gs->castlingPrivileges, 3); // white short castle
+            break;
+        case a8:
+            clearBit((BitBoard*)&gs->castlingPrivileges, 0); // black long castle
+            break;
+        case h8:
+            clearBit((BitBoard*)&gs->castlingPrivileges, 1); // white short castle
+        case e8:
+            clearBit((BitBoard*)&gs->castlingPrivileges, 0); // white long castle
+            clearBit((BitBoard*)&gs->castlingPrivileges, 1); // white short castle
             break;
             
         default:
             break;
     }
-    */
-    
-    
-    if(getBit((BitBoard *)&move, 3)){
-        // PROMOTION - 1xxx
-        uint8_t promoPiece = (move & 3) + 1 + colorToMoveOffset;
-        
-        // Add Promoted Piece
-        gs->squareOccupancy[targetSquare] = promoPiece;
-        
-        switchBit(&gs->boards[promoPiece], targetSquare);
-        switchBit(&gs->boards[sidePieces], targetSquare);
-        
-        if (getBit((BitBoard*)&move, 2)) {
-            // PROMO CAPTURE - 11xx
-            
-            //Remove Captured Piece
-            switchBit(&gs->boards[targetPiece], targetSquare);
-            
-        }else{
-            // Non-promo capture, need to update aPieces
-            switchBit(&gs->boards[aPieces], targetSquare);
-        }
-                              
-                                               
-    }else{
-        // NON PROMOTION - 0xxx
-        
-        // Add Moved Piece
-        gs->squareOccupancy[targetSquare] = originPiece;
-        
-        switchBit(&gs->boards[originPiece], targetSquare);
-        switchBit(&gs->boards[sidePieces], targetSquare);
-        
-        if(getBit((BitBoard*)&move, 2)){
-            // CAPTURE - 01xx
-            if(getBit((BitBoard*)&move, 0)){
-                // EN PASSANT CAPTURE - 0101
-                
-                // Switch bit at targetSquare for aPieces
-                switchBit(&gs->boards[aPieces], targetSquare);
-                
-                // Remove captured piece
-                if(gs->whiteToMove){
-                    switchBit(&gs->boards[bPawns], targetSquare - 8);
-                    switchBit(&gs->boards[oppositeSidePieces], targetSquare - 8);
-                    switchBit(&gs->boards[aPieces], targetSquare - 8);
-                    gs->squareOccupancy[targetSquare - 8] = no_pce;
-                }else{
-                    switchBit(&gs->boards[wPawns], targetSquare + 8);
-                    switchBit(&gs->boards[oppositeSidePieces], targetSquare + 8);
-                    switchBit(&gs->boards[aPieces], targetSquare + 8);
-                    gs->squareOccupancy[targetSquare + 8] = no_pce;
-                }
-            }else{
-                // REGULAR CAPTURE 0100
-                
-                // Remove captured piece
-                switchBit(&gs->boards[targetPiece], targetSquare);
-                switchBit(&gs->boards[oppositeSidePieces], targetSquare);
-                
-            }
-        }else{
-            // Non Capture-Non Promo - 00xx
-            
-            // Non capture -> switch targetSquare at aPieces
-            switchBit(&gs->boards[aPieces], targetSquare);
-
-            if(getBit((BitBoard*)&move, 1)){
-                // CASTLE
-                if(getBit((BitBoard*)&move, 0)){
-                    // LONG CASTLE - 0011
-                    if(gs->whiteToMove){
-                        gs->squareOccupancy[a1] = no_pce;
-                        gs->squareOccupancy[d1] = wRooks;
-                        switchBit(&gs->boards[wRooks], a1);
-                        switchBit(&gs->boards[wRooks], d1);
-                        switchBit(&gs->boards[wPieces], a1);
-                        switchBit(&gs->boards[wPieces], d1);
-                        switchBit(&gs->boards[aPieces], a1);
-                        switchBit(&gs->boards[aPieces], d1);
-                    }else{
-                        gs->squareOccupancy[a8] = no_pce;
-                        gs->squareOccupancy[d8] = bRooks;
-                        switchBit(&gs->boards[bRooks], a8);
-                        switchBit(&gs->boards[bRooks], d8);
-                        switchBit(&gs->boards[bPieces], a8);
-                        switchBit(&gs->boards[bPieces], d8);
-                        switchBit(&gs->boards[aPieces], a8);
-                        switchBit(&gs->boards[aPieces], d8);
-                    }
-                }else{
-                    // SHORT CASTLE - 0010
-                    if(gs->whiteToMove){
-                        gs->squareOccupancy[h1] = no_pce;
-                        gs->squareOccupancy[f1] = wRooks;
-                        switchBit(&gs->boards[wRooks], h1);
-                        switchBit(&gs->boards[wRooks], f1);
-                        switchBit(&gs->boards[wPieces], h1);
-                        switchBit(&gs->boards[wPieces], f1);
-                        switchBit(&gs->boards[aPieces], h1);
-                        switchBit(&gs->boards[aPieces], f1);
-                    }else{
-                        gs->squareOccupancy[h8] = no_pce;
-                        gs->squareOccupancy[f8] = bRooks;
-                        switchBit(&gs->boards[bRooks], h8);
-                        switchBit(&gs->boards[bRooks], f8);
-                        switchBit(&gs->boards[bPieces], h8);
-                        switchBit(&gs->boards[bPieces], f8);
-                        switchBit(&gs->boards[aPieces], h8);
-                        switchBit(&gs->boards[aPieces], f8);
-                    }
-                }
-            }else if(getBit((BitBoard*)&move, 0)){
-                // DOUBLE PAWN PUSH - 0001
-                // Set EnPassant Status
-                if(gs->whiteToMove){
-                    gs->enPassantTarget = targetSquare - 8;
-                }else{
-                    gs->enPassantTarget = targetSquare + 8;
-                }
-            }
-        }
-    }
-    
-    // Update Game Ply
-    gs->plyNum++;
-    
-    // Update Castling Priviledges
-    if(originSquare == a1){
-        clearBit((BitBoard*)&gs->castlingPrivileges, 2); // white long castle
-    }else if(originSquare == h1){
-        clearBit((BitBoard*)&gs->castlingPrivileges, 3); // white short castle
-    }else if(originSquare == e1){
-        clearBit((BitBoard*)&gs->castlingPrivileges, 2); // white long castle
-        clearBit((BitBoard*)&gs->castlingPrivileges, 3); // white short castle
-    }else if(originSquare == a8){
-        clearBit((BitBoard*)&gs->castlingPrivileges, 0); // black long castle
-    }else if(originSquare == h8){
-        clearBit((BitBoard*)&gs->castlingPrivileges, 1); // white short castle
-    }else if(originSquare == e8){
-        clearBit((BitBoard*)&gs->castlingPrivileges, 0); // white long castle
-        clearBit((BitBoard*)&gs->castlingPrivileges, 1); // white short castle
-    }
     
     gs->histIndex++;
 
-    // Already updated en Passant target
-    
-    //TODO: Fifty Move Rule Ply - maybe code 0001 just means pawn push?, then check if double to update ep square.
-    // Probably will check if quiet move then add another flag -> PERHAPS ADDITIONAL CODE FOR QUIET MOVE PAWN PUSH
-    
-    
-    
-
-    
     // Check if position Legal
     Square kingPos = get_ls1b_pos(&gs->boards[wKings + colorToMoveOffset]);
     if (inCheck(kingPos, gs)){
-        
         gs->whiteToMove = !gs->whiteToMove;
-        
         return -1;
     }
     
     //Switch who is on move.
     gs->whiteToMove = !gs->whiteToMove;
-    
     return 0;
 }
 

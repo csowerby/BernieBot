@@ -88,7 +88,7 @@ enum {wP, wN, wB, wR, wQ, wK, bP, bN, bB, bR, bQ, bK, no_pce};
 enum {w_short_castle = 8, w_long_castle=4, b_short_castle=2, b_long_castle=1};
 
 // Bitboards
-enum bitboards {wPawns, wKnights, wBishops, wRooks, wQueens, wKings, bPawns, bKnights, bBishops, bRooks, bQueens, bKings, wPieces, bPieces, aPieces};
+enum bitboards {wPawns, wKnights, wBishops, wRooks, wQueens, wKings, bPawns, bKnights, bBishops, bRooks, bQueens, bKings, bPieces, aPieces, wPieces};
 
 // Game History
 enum gameHist {ep_target, castling_rights, captured_piece}; 
