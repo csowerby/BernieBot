@@ -1,33 +1,48 @@
 
 CC = gcc
-CFLAGS=
 
-all:
-	$(CC) $(CFLAGS) src/main.c src/init.c src/engine.c src/perft.c src/gamestate.c -o BernieBot
-	./BernieBot
-	make clean
+BIN = bin
+OBJ = obj
+ASM = asm
+SRC = src
+SRCS = $(wildcard $(SRC)/*.c)
+
+OBJS = $(patsubst $(SRC)/%.c,$(OBJ)/%.o,$(SRCS))
+
+ASMS = $(patsubst $(SRC)/%.c,$(ASM)/%.s,$(SRCS))
+
+EXE = $(BIN)/BernieBot
+
+CFLAGS= -Wall -g
+
+# Make Executable
+all: $(EXE)
+
+$(EXE): $(OBJS)
+	$(CC) -Wall $(OBJS) -o $@
+
+# Make .o object files in /obj
+$(OBJ)/%.o: $(SRC)/%.c $(SRC)/*.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Make .s assembly files in /asm
+$(ASM)/%.s : $(SRC)/%.c $(SRC)/*.h
+	$(CC) $(CFLAGS) -S $< -o $@
+
+asm: $(ASMS)
 
 
-init.o: init.c defs.h
-	$(CC) $(CFLAGS) -c init.c
 
-GameState.o: GameState.c GameState.h
-	 $(CC) $(CFLAGS) -c GameState.c
 
-engine.o: engine.c engine.h
-	$(CC) $(CFLAGS) -c engine.c
 
-Perft.o: Perft.c Perft.h
+# Run executable
+run: $(EXE)
+	./$^
 
-BernieBot: init.o GameState.o
-
-#--------------------
-fast:
-	$(CC) -O3 $(CFLAGS) main.c init.c engine.c Perft.c GameState.c -o BernieBot
-
-assembly:
-	$(CC) -O0 -S main.c engine.c main.c init.c engine.c Perft.c GameState.c
 
 
 clean:
-	rm -r -f *.s *.o BernieBot
+	rm -r -f bin/* obj/*
+
+veryclean:
+	rm -r -f bin/* obj/* asm/*

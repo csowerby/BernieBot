@@ -6,7 +6,7 @@
 //  Copyright © 2021 Charlie Sowerby. All rights reserved.
 //
 
-#include "GameState.h"
+#include "gamestate.h"
 
 
 /* ------------ BITBOARD METHODS -------------- */

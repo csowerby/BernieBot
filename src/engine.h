@@ -11,7 +11,7 @@
 
 #include <stdio.h>
 #include "defs.h"
-#include "GameState.h"
+#include "gamestate.h"
 
 
 // Search
