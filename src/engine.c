@@ -962,7 +962,7 @@ BitBoard getRookMoveBoard(Square origin_sq, GameState* gs){
 }
 
 
-int calcKnightMoves(Move **knightList, Square origin_sq, GameState *gs){
+inline int calcKnightMoves(Move **knightList, Square origin_sq, GameState *gs){
     /* Calculate Knight Moves
      Params:
         - **knightList: double pointer to array of knightMoves initialized as null
@@ -1016,7 +1016,7 @@ int calcKnightMoves(Move **knightList, Square origin_sq, GameState *gs){
 }
 
 
-int calcKingMoves(Move **kingList, Square origin_sq, GameState *gs){
+inline int calcKingMoves(Move **kingList, Square origin_sq, GameState *gs){
     /* Params:
         - **kingList: double pointer to list of king moves: should be initialized as null
         - origin_sq: Initial square of move
@@ -1061,7 +1061,7 @@ int calcKingMoves(Move **kingList, Square origin_sq, GameState *gs){
     return moveCount;
 }
 
-int calcRookMoves(Move **slidingList, Square origin_sq, GameState *gs){
+inline int calcRookMoves(Move **slidingList, Square origin_sq, GameState *gs){
     /* Params:
         - **slidingList: double pointer to list of sliding moves: should be initialized as null
         - origin_sq: Initial square of move
@@ -1118,7 +1118,7 @@ int calcRookMoves(Move **slidingList, Square origin_sq, GameState *gs){
     return moveCount;
 }
 
-int calcBishopMoves(Move **diagList, Square origin_sq, GameState *gs){
+inline int calcBishopMoves(Move **diagList, Square origin_sq, GameState *gs){
     // Allocate 13 Moves worth of memory because its the maximum move capacity
     Move* moveList = (Move*)malloc(13* sizeof(Move));
     int moveCount = 0;
@@ -1167,7 +1167,7 @@ int calcBishopMoves(Move **diagList, Square origin_sq, GameState *gs){
     return moveCount;
 }
 
-int calcPawnMoves(Move **pawnList, GameState *gs){
+inline int calcPawnMoves(Move **pawnList, GameState *gs){
     // Allocate 8 * 4 = 32 Moves worth of memory because its the maximum move capacity of all pawns
     Move* moveList = (Move*)malloc(32* sizeof(Move));
     int moveCount = 0;
@@ -1221,7 +1221,7 @@ int calcPawnMoves(Move **pawnList, GameState *gs){
                 moveList[moveCount+i] = 0;
             }
             Square targetSquare = get_ls1b_pos(&rightPawnAttackPromos);
-            clearBit(&rightPawnAttackPromos, targetSquare);
+            CLEAR_LS1B(rightPawnAttackPromos);
             for(int i = 0; i < 4; i++){
                 moveList[moveCount + i] += targetSquare << 4;
                 moveList[moveCount + i] += (targetSquare - 9) << 10;
@@ -1289,7 +1289,7 @@ int calcPawnMoves(Move **pawnList, GameState *gs){
         while(pawnDoubleMoveTargets){
             moveList[moveCount] = 0;
             Square targetSquare = get_ls1b_pos(&pawnDoubleMoveTargets);
-            clearBit(&pawnDoubleMoveTargets, targetSquare);
+            CLEAR_LS1B(pawnDoubleMoveTargets);
             moveList[moveCount] += targetSquare << 4;
             moveList[moveCount] += (targetSquare - 16) << 10;
             // Add Code for Double Pawn Push - 0001

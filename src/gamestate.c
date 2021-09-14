@@ -11,37 +11,36 @@
 
 /* ------------ BITBOARD METHODS -------------- */
 
-void setBit(BitBoard *board, int bitPos){
+inline void setBit(BitBoard *board, int bitPos){
     *board |= (1ULL << bitPos);
 }
 
-void clearBit(BitBoard *board, int bitPos){
+inline void clearBit(BitBoard *board, int bitPos){
     *board &= ~(1ULL << bitPos);
 }
 
-void switchBit(BitBoard *board, int bitPos){
+inline void switchBit(BitBoard *board, int bitPos){
     *board ^= (1ULL << bitPos);
 }
 
-bool getBit(BitBoard *board, int bitPos){
-    uint64_t flag = 1;
-    if (*board & flag << bitPos){
-        return true;
-    }else{
-        return false;
-    }
+inline bool getBit(BitBoard *board, int bitPos){
+    return *board & (1ULL << bitPos);
 }
 
-uint8_t get_ls1b_pos(BitBoard *board){
+inline uint8_t get_ls1b_pos(BitBoard *board){
     // Using the deBruijin algorithm
     // http://supertech.csail.mit.edu/papers/debruijn.pdf
     //return (uint8_t) DeBruijnBitPosition[((uint64_t)((*board & -(*board)) * debrujin64)) >> 58];
 
-        // I WAS using the deBruijin algorithm, but I decided to use these x86 instructions instead 
+        // I WAS using the deBruijin algorithm, but I decided to use these x86 instructions instead
     return __builtin_ffsll(*board)-1;
 }
 
-uint8_t get_num_1b(BitBoard board){
+inline void clear_ls1b(BitBoard *board){
+    *board = *board & (*board - 1);
+}
+
+inline uint8_t get_num_1b(BitBoard board){
     return __builtin_popcountll(board);
 };
 
@@ -54,7 +53,7 @@ void init_GameState(GameState *gs, char *fen){
         gs->boards[i] = 0ULL;
 
     }
-    
+
     // Fill PCELIST with Zero - NOTE: THIS FUNCTIONALITY IS BEING REMOVED IN THE FUTURE
     for (int i = 0; i < 12; i ++){
         for (int j = 0; j < 10; j++){
@@ -62,28 +61,28 @@ void init_GameState(GameState *gs, char *fen){
         }
         gs->numPieces[i] = 0;
     }
-    
+
     //Fill squareOccupancy table with no_pce
     for (int i = 0; i < 64; i++){
         gs->squareOccupancy[i] = no_pce;
     }
-    
-    gs->histIndex = 0; 
-    
+
+    gs->histIndex = 0;
+
     gs-> castlingPrivileges = 0;
     gs-> enPassantTarget = no_sqr;
     gs-> fiftyMovePly = 0;
     gs-> plyNum = 0;
     gs-> posKey = 0ULL;
-    
+
     // Initialize GameState from FEN
     if (fen == NULL){
         fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-        printf("Initializing Starting Position... \n\n");
+        //printf("Initializing Starting Position... \n\n");
     }else{
-        printf("Initializing with FEN Inputted: %s\n\n", fen);
+        //printf("Initializing with FEN Inputted: %s\n\n", fen);
     }
-    
+
     // PARSING FEN
     int i;
     int rank = 7;
@@ -106,12 +105,12 @@ void init_GameState(GameState *gs, char *fen){
             }
         }else{
             // Piece needs to be appended
-            
+
             int piece_num = fenCharToNum(fen[i]);
             int square_num = 8* rank + file;
             // Add Piece to squareOccupancy
             gs->squareOccupancy[square_num] = piece_num;
-            
+
             // add piece to numPieces
             gs-> numPieces[piece_num]++;
             // add piece and square to pceList;
@@ -122,7 +121,7 @@ void init_GameState(GameState *gs, char *fen){
                     break;
                 }
             }
-            
+
             // Add Piece to BitBoard
 
             setBit(&gs->boards[piece_num], square_num);
@@ -135,10 +134,10 @@ void init_GameState(GameState *gs, char *fen){
             file++;
         }
     }
-    
-     
-     
-     
+
+
+
+
 
     // WHO IS ON MOVE:
     i++;
@@ -196,10 +195,10 @@ void init_GameState(GameState *gs, char *fen){
         gs-> enPassantTarget = square_coords_to_num(rank_num-1, file_char);
     }
     i++;
-     
+
     // Update the 50 move ply rule
-    
-    
+
+
     for(; fen[i] != ' '; i++){
         //printf("50 Move Ply Character Registered! %c\n", fen[i]);
         gs-> fiftyMovePly = 10 * gs->fiftyMovePly + (fen[i] - '0');
@@ -216,7 +215,7 @@ void init_GameState(GameState *gs, char *fen){
         ply++;
     }
     gs->plyNum = ply;
-    
+
     if (fen != NULL){
         // ASSERT GENERATED FEN IS ACCURATE
         char generatedFEN[200];
@@ -236,7 +235,7 @@ void init_GameState(GameState *gs, char *fen){
 void printGameStateInfo(GameState *gs, bool printBitBoards){
     // BitBoards
     char FEN[200];
-    printf("FEN: %s", generateFEN(gs, FEN)); 
+    printf("FEN: %s", generateFEN(gs, FEN));
     if (printBitBoards){
         printf("\n -- GAMESTATE INFO -- \n\n");
         printf("BitBoards: (wPawns, wKnights, wBishops, wRooks, wQueens, wKings, bPawns, ... , wPieces, bPieces \n");
@@ -244,15 +243,15 @@ void printGameStateInfo(GameState *gs, bool printBitBoards){
             printBitBoard(gs->boards + i);
         }
     }
-    
+
 
     printf("Move: %i, Ply: %i\n", gs->plyNum/2 + 1, gs->plyNum);
     printf("White To Move?: %i\n", gs->whiteToMove);
     printf("Castling (KQkq): %i%i%i%i\n", getBit((BitBoard *)&gs->castlingPrivileges, 3), getBit((BitBoard *)&gs->castlingPrivileges, 2), getBit((BitBoard *)&gs->castlingPrivileges, 1), getBit((BitBoard *)&gs->castlingPrivileges, 0));
     printf("Fifty Move Ply Counter: %i\n", gs->fiftyMovePly);
-    
+
     char ep_square[3];
-    
+
     printf("EP Square %s\n", square_num_to_coords(ep_square, gs->enPassantTarget));
     printf("\nGame board:\n");
     printGameBoard(gs);
@@ -261,7 +260,7 @@ void printGameStateInfo(GameState *gs, bool printBitBoards){
 void printGameBoard(GameState *gs){
 
     char top_bot_string[] = "+---+---+---+---+---+---+---+---+\n";
-    
+
     // CALCULATE PIECE CHARACTER STRING
 
     // PUT PIECES INTO THE BOARD AND PRINT IT:
@@ -300,7 +299,7 @@ char* generateFEN(GameState * gs, char* FEN){
                     i++;
                 }
                 FEN[i] = pieceNumToChar(currentPiece);
-                spaces = 0; 
+                spaces = 0;
                 i++;
             }
         }
@@ -309,11 +308,11 @@ char* generateFEN(GameState * gs, char* FEN){
             i++;
         }
         FEN[i] = '/';
-        spaces = 0; 
-        i++; 
+        spaces = 0;
+        i++;
     }
-    i--; 
-    
+    i--;
+
     // TURN TO MOVE
     FEN[i] = ' ';
     i++;
@@ -323,7 +322,7 @@ char* generateFEN(GameState * gs, char* FEN){
         FEN[i] = 'b';
     }
     i++;
-    
+
     //Castling Rights
     FEN[i] = ' ';
     i++;
@@ -347,7 +346,7 @@ char* generateFEN(GameState * gs, char* FEN){
         FEN[i] = '-';
         i++;
     }
-    
+
     //En Passant
     FEN[i] = ' ';
     i++;
@@ -362,7 +361,7 @@ char* generateFEN(GameState * gs, char* FEN){
         FEN[i] = epSq[1];
         i++;
     }
-    
+
     // 50 move ply rule
     FEN[i] = ' ';
     i++;
@@ -374,9 +373,9 @@ char* generateFEN(GameState * gs, char* FEN){
     i++;
     FEN[i] = ' ';
     i++;
-    
+
     int gameMove = gs->plyNum/2 + 1;
-    
+
     if(gameMove/10){
         FEN[i] = gameMove/10 + '0';
         i++;
@@ -384,33 +383,33 @@ char* generateFEN(GameState * gs, char* FEN){
     FEN[i] = gameMove % 10 + '0';
     i++;
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
+
+
     FEN[i] = '\0';
     return FEN;
 }
 
 
 int compareGameStates(GameState *gs1, GameState *gs2){
-    
+
     for(int i = 0; i < NUM_BOARDS; i++){
         if(gs1->boards[i] != gs2->boards[i]){
             return -i - 100; ;
         }
     }
-    
+
     for(int i = 0; i < 64; i++){
         if(gs1->squareOccupancy[i] != gs2->squareOccupancy[i]){
             return i + 100;
         }
     }
-    
+
     return 0;
 }

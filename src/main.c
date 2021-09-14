@@ -28,19 +28,11 @@ void moveInput(void){
  Next:
     
  
- * Implement make/unmake move
-    * Use XOR to update bitboards https://www.chessprogramming.org/General_Setwise_Operations#UpdateByMove
-    * Check Legality of Move immediately after making move
-    * Must not be in check immediately after move is made
-        * if in check after all PL moves, then you're in mate... darn.
+ * ACTUAL THINGS TO DO RIGHT NOW:
+    * pop ls1b faster using x & (x - 1)
  
  
- * Implement function to check legality of PL moves?
-    -> this is makeMove then check if in check, if not, we good. 
-    
  
- 
- * Implement minimax
  * implement ab pruning
  * Implement different moveGen that separates quiet moves and attacks?
  
@@ -100,6 +92,11 @@ void moveInput(void){
 
 int main(void) {
     
+    
+    
+    startPerft(5);
+    
+    /*
     init();
     
     
@@ -109,7 +106,9 @@ int main(void) {
     
 
     clock_t executionStart = clock();
-    search(5, &gs); 
+    //search(3, &gs);
+    
+
     
     
     clock_t executionEnd = clock();
@@ -118,7 +117,7 @@ int main(void) {
     
     
     
-
+     */
 
      
     return 0;

@@ -74,6 +74,8 @@
 // Index of Least Significant 1 bit (-1 if no 1 bits, i.e. X=0)
 #define LS1B(X) __builtin_ffsll(X)-1
 
+#define CLEAR_LS1B(X) X &= (X-1)
+
 /* ----- deBrujin lookup stuff ------- */
 #define debrujin64 0x022fdd63cc95386dULL
 static const uint8_t DeBruijnBitPosition[64] = {0,
@@ -151,7 +153,8 @@ void clearBit(BitBoard *board, int bitPos);
 void switchBit(BitBoard *board, int bitPos);
 bool getBit(BitBoard *board, int bitPos);
 uint8_t get_ls1b_pos(BitBoard *board);
-uint8_t get_num_1b(BitBoard board); 
+uint8_t get_num_1b(BitBoard board);
+void clear_ls1b(BitBoard *board);
 
 /* ----------- INITIALIZATION METHODS ------- */
 
