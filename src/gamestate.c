@@ -12,27 +12,32 @@
 /* ------------ BITBOARD METHODS -------------- */
 
 inline void setBit(BitBoard *board, int bitPos){
+    // Use SET_BIT preferred
     *board |= (1ULL << bitPos);
 }
 
 inline void clearBit(BitBoard *board, int bitPos){
+    // Use CLEAR_LS1B preferred
     *board &= ~(1ULL << bitPos);
 }
 
 inline void switchBit(BitBoard *board, int bitPos){
+    // Use SWITCH_BIT preferred
     *board ^= (1ULL << bitPos);
 }
 
 inline bool getBit(BitBoard *board, int bitPos){
+    // Use GET_BIT preferred
     return *board & (1ULL << bitPos);
 }
 
 inline uint8_t get_ls1b_pos(BitBoard *board){
     // Using the deBruijin algorithm
     // http://supertech.csail.mit.edu/papers/debruijn.pdf
+
     //return (uint8_t) DeBruijnBitPosition[((uint64_t)((*board & -(*board)) * debrujin64)) >> 58];
 
-        // I WAS using the deBruijin algorithm, but I decided to use these x86 instructions instead
+    // I WAS using the deBruijin algorithm, but I decided to use these x86 instructions instead
     return __builtin_ffsll(*board)-1;
 }
 
@@ -143,9 +148,9 @@ void init_GameState(GameState *gs, char *fen){
     i++;
     //printf("Character Registered! %c\n", fen[i]);
     if (fen[i] == 'w'){
-        gs->whiteToMove = true;
+        gs->sideToMove = wPieces;
     }else if (fen[i] == 'b'){
-        gs-> whiteToMove = false;
+        gs->sideToMove = bPieces;
     }else{
         assert(false);
         // Only two legal characters here
@@ -211,7 +216,7 @@ void init_GameState(GameState *gs, char *fen){
         gameMove = 10 * gameMove + (fen[i] - '0');
     }
     int ply = (gameMove-1) * 2;
-    if (!gs->whiteToMove){
+    if (gs->sideToMove == bPieces){
         ply++;
     }
     gs->plyNum = ply;
@@ -246,7 +251,7 @@ void printGameStateInfo(GameState *gs, bool printBitBoards){
 
 
     printf("Move: %i, Ply: %i\n", gs->plyNum/2 + 1, gs->plyNum);
-    printf("White To Move?: %i\n", gs->whiteToMove);
+    printf("White To Move?: %i\n", gs->sideToMove == wPieces);
     printf("Castling (KQkq): %i%i%i%i\n", getBit((BitBoard *)&gs->castlingPrivileges, 3), getBit((BitBoard *)&gs->castlingPrivileges, 2), getBit((BitBoard *)&gs->castlingPrivileges, 1), getBit((BitBoard *)&gs->castlingPrivileges, 0));
     printf("Fifty Move Ply Counter: %i\n", gs->fiftyMovePly);
 
@@ -316,7 +321,7 @@ char* generateFEN(GameState * gs, char* FEN){
     // TURN TO MOVE
     FEN[i] = ' ';
     i++;
-    if(gs->whiteToMove){
+    if(gs->sideToMove == wPieces){
         FEN[i] = 'w';
     }else{
         FEN[i] = 'b';

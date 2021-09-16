@@ -21,6 +21,9 @@ BitBoard kingMoves[64] = {0};
 BitBoard pawnCaptures[64][2] = {{0}};
 uint64_t zobristTable[64][12] = {{0}};
 
+// Piece Arrays for fast lookup
+extern int oppositePieceArray[13] = {1, 0, 8, 9, 10, 11, 12, 13, 2, 3, 4, 5, 6, 7}
+extern int promoPieceArray[4][2] = {{bKnights, wKnights}, {bBishops, wBishops}, {bRooks, wRooks}, {bQueens, wQueens}}
 
 // Magics
 sMagic rookMagics[64];
@@ -32,18 +35,18 @@ const char *chessPieces[13] = {"\u2659","\u2658","\u2657","\u2656"," \u2655","\u
 
 /* --------- DEFAULT METHODS --------------- */
 
-void printMoveInfo(Move *move){
-    Square targetSquare = 63 & (*move >> 4);
-    Square originSquare = (*move >> 10);
+void printMoveInfo(Move move){
+    Square targetSquare = 63 & (move >> 4);
+    Square originSquare = (move >> 10);
     char str[3];
-    printf("Move info: %i\n", *move);
+    printf("Move info: %i\n", move);
     square_num_to_coords(str, originSquare);
     printf("Origin Square: %s\n", str);
     square_num_to_coords(str, targetSquare);
     printf("Target Square: %s\n", str);
     printf("Special Flags (promo, cap, sp0, sp1): ");
     for (int i = 3; i>= 0; i--){
-        printf("%i", getBit((BitBoard*)move, i));
+        printf("%i", getBit((BitBoard*)&move, i));
     }
     printf("\n\n");
 }
@@ -279,7 +282,7 @@ void preCalcKingMoves(BitBoard kingMoves[64]){
 
 void initZobrist(uint64_t zobristTable[64][12] ){
     // GENERATE RANDOM NUMBERS TO FILL THE ZOBRIST TABLE.
-    // TODO: -
+    // TODO: Zobrist
     // Probably just want to calculate once and leave them here.
 }
 

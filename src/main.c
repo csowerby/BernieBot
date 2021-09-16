@@ -16,15 +16,15 @@
 
 /*
 
- TODO: -
+ Plans:
 
 
 
  Next:
 
 
- * ACTUAL THINGS TO DO RIGHT NOW:
-    * pop ls1b faster using x & (x - 1)
+ * add funcationality for 50 move draw
+ * add special code 0110 for quiet pawn push
 
 
 
@@ -83,12 +83,14 @@
 
 
 
-
 int main(void) {
     printf("\n------------------ BernieBot ------------------\n\n");
 
 
-    startPerft(5);
+    printf("%lu", 0b0001000 << -1);
+
+
+    //startPerft(5);
 
     /*
     init();

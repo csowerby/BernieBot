@@ -45,7 +45,9 @@ typedef struct{
 
     // Number of halfmoves since
     uint16_t fiftyMovePly;
-    bool whiteToMove;
+
+    //TODO: Add more info about stuff, i.e.
+    int sideToMove; // 0 for black, 1 for white
 
     uint64_t posKey; // Key of position, to be looked up in transposition table.
         // ZOBRIST HASHING
@@ -53,7 +55,7 @@ typedef struct{
     Move moveHist[10];
     int moveIndex;
 
-    uint8_t gameHist[25][3];
+    uint8_t gameHist[25][4];
     int histIndex;
 
 }GameState;

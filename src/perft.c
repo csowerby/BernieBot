@@ -70,14 +70,14 @@ int checkIfGameStateConsistent(GameState *gs){
 
 uint64_t Perft(int depth, GameState *gs){
     // SPEED VERSION
-    Move* move_list = NULL;
+    Move move_list[MOVE_LIST_LENGTH] = {0};
     int n_moves, i;
     uint64_t nodes = 0;
     if (depth == 0){
         return 1ULL;
     }
 
-    n_moves = moveGen(&move_list, gs);
+    n_moves = moveGen(move_list, gs);
 
     for(i = 0; i < n_moves; i++){
         int success = makeMove(gs, move_list[i]);
@@ -92,15 +92,15 @@ uint64_t Perft(int depth, GameState *gs){
 
 
 uint64_t Perft_speedtest(int depth, GameState *gs, uint64_t* moveGeneration, uint64_t* moveMaking, uint64_t* moveUnmaking, uint64_t* abortedMoves ){
-    // SPEED VERSION
-    Move* move_list = NULL;
+    // VERSION WITH TIMING
+    Move move_list[MOVE_LIST_LENGTH] = {0};
     int n_moves, i;
     uint64_t nodes = 0;
     if (depth == 0){
         return 1ULL;
     }
     clock_t start = clock();
-    n_moves = moveGen(&move_list, gs);
+    n_moves = moveGen(move_list, gs);
     clock_t finish = clock();
     *moveGeneration += finish-start;
 
@@ -129,7 +129,7 @@ uint64_t Perft_speedtest(int depth, GameState *gs, uint64_t* moveGeneration, uin
 
 uint64_t Perft_debug(int depth, GameState *gs){
     // DEBUGGING VERSION
-    Move* move_list = NULL;
+    Move move_list[MOVE_LIST_LENGTH] = {0};
     int n_moves, i;
     uint64_t nodes = 0;
 
@@ -139,17 +139,17 @@ uint64_t Perft_debug(int depth, GameState *gs){
     GameState tempGS;
     memcpy(&tempGS, gs, sizeof(GameState));
 
-    n_moves = moveGen(&move_list, gs);
+    n_moves = moveGen(move_list, gs);
     /*
     for(int i = 0; i < n_moves; i++){
-        printMoveInfo(&move_list[i]);
+        printMoveInfo(move_list[i]);
     }
     */
 
     for (i = 0; i < n_moves; i++) {
         // Loop through and make all the moves
 
-        printMoveInfo(&move_list[i]);
+        printMoveInfo(move_list[i]);
 
         int success = makeMove(gs, move_list[i]);
 
@@ -166,7 +166,7 @@ uint64_t Perft_debug(int depth, GameState *gs){
         if(testGS != 0){
             printf("ERROR CODE: %i\n", testGS);
             printf("MOVE: \n");
-            printMoveInfo(&move_list[i]);
+            printMoveInfo(move_list[i]);
             printf("ORIGINAL GAMESTATE:\n");
             printGameStateInfo(&tempGS, true);
             printf("MODIFIED GAMESTATE: \n");

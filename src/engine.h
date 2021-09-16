@@ -28,17 +28,9 @@ int makeMove(GameState *gs, Move move);
 int unmakeMove(GameState *gs, Move move);
 int inCheck(Square kingPos, GameState* gs);
 
-// Move Generation
-
-int moveGen(Move **moveList, GameState *gs);
-
-BitBoard getBishopMoveBoard(Square origin_sq, GameState* gs);
-BitBoard getRookMoveBoard(Square origin_sq, GameState* gs);
-
-int calcKingMoves(Move **kingList, Square origin_sq, GameState *gs);
-int calcKnightMoves(Move **kingList, Square origin_sq, GameState *gs);
-int calcRookMoves(Move **slidingList, Square origin_sq, GameState *gs);
-int calcBishopMoves(Move **diagList, Square origin_sq, GameState *gs);
-int calcPawnMoves(Move **pawnList, GameState *gs);
+//Move gen functions needed for search functions and inCheck
+int moveGen(Move move_list[MOVE_LIST_LENGTH], GameState *gs);
+inline BitBoard getBishopMoveBoard(Square origin_sq, GameState* gs);
+inline BitBoard getRookMoveBoard(Square origin_sq, GameState* gs);
 
 #endif /* engine_h */
