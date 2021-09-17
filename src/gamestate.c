@@ -59,13 +59,13 @@ void init_GameState(GameState *gs, char *fen){
 
     }
 
-    // Fill PCELIST with Zero - NOTE: THIS FUNCTIONALITY IS BEING REMOVED IN THE FUTURE
-    for (int i = 0; i < 12; i ++){
-        for (int j = 0; j < 10; j++){
-            gs->pceList[i][j] = no_sqr;
-        }
-        gs->numPieces[i] = 0;
-    }
+    // // Fill PCELIST with Zero - NOTE: THIS FUNCTIONALITY IS BEING REMOVED IN THE FUTURE - if the code currently works delete this stuff 
+    // for (int i = 0; i < 12; i ++){
+    //     for (int j = 0; j < 10; j++){
+    //         gs->pceList[i][j] = no_sqr;
+    //     }
+    //     gs->numPieces[i] = 0;
+    // }
 
     //Fill squareOccupancy table with no_pce
     for (int i = 0; i < 64; i++){
@@ -113,27 +113,17 @@ void init_GameState(GameState *gs, char *fen){
 
             int piece_num = fenCharToNum(fen[i]);
             int square_num = 8* rank + file;
+
+
             // Add Piece to squareOccupancy
             gs->squareOccupancy[square_num] = piece_num;
 
-            // add piece to numPieces
-            gs-> numPieces[piece_num]++;
-            // add piece and square to pceList;
-            for (int j = 0; j<10; j++){
-                if (gs->pceList[piece_num][j] == no_sqr){
-                    // append piece, then break
-                    gs->pceList[piece_num][j] = square_num;
-                    break;
-                }
-            }
-
             // Add Piece to BitBoard
-
             setBit(&gs->boards[piece_num], square_num);
-            if (piece_num < 6){
-                setBit(&gs->boards[wPieces], square_num);
-            }else{
+            if ((piece_num < 8) && (piece_num >= 2)){
                 setBit(&gs->boards[bPieces], square_num);
+            }else if((piece_num < 14) && (piece_num >= 8)){
+                setBit(&gs->boards[wPieces], square_num);
             }
             setBit(&gs->boards[aPieces], square_num);
             file++;
@@ -245,6 +235,7 @@ void printGameStateInfo(GameState *gs, bool printBitBoards){
         printf("\n -- GAMESTATE INFO -- \n\n");
         printf("BitBoards: (wPawns, wKnights, wBishops, wRooks, wQueens, wKings, bPawns, ... , wPieces, bPieces \n");
         for (int i = 0; i < NUM_BOARDS; i++){
+            printf("Board: %s\n", chessPieceNames[i]);
             printBitBoard(gs->boards + i);
         }
     }
@@ -414,6 +405,10 @@ int compareGameStates(GameState *gs1, GameState *gs2){
         if(gs1->squareOccupancy[i] != gs2->squareOccupancy[i]){
             return i + 100;
         }
+    }
+
+    if(gs1->castlingPrivileges != gs2->castlingPrivileges){
+        return 500;
     }
 
     return 0;

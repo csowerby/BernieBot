@@ -24,6 +24,13 @@
 #include <string.h>
 #include <limits.h>
 
+/* ------- DEBUGGING -------- */
+
+#ifdef DEBUG
+    #define DB if(1)
+#else
+    #define DB if(0) 
+#endif
 
 
 /* ------ CONSTANTS ----------*/
@@ -95,15 +102,15 @@
 // Index of Least Significant 1 bit (-1 if no 1 bits, i.e. X=0)
 #define GET_LS1B(X) __builtin_ffsll(X)-1
 
-#define CLEAR_LS1B(X) X &= (X-1)
+#define CLEAR_LS1B(X)       (X &= (X-1))
 
-#define SWITCH_BIT(X, n) X ^= (1ULL << (n))
+#define SWITCH_BIT(X, n)    (X ^= (1ULL << (n)))
 
-#define SET_BIT(X, n) X &= (1ULL < n)
+#define SET_BIT(X, n)       (X &= (1ULL << (n)))
 
-#define CLEAR_BIT(X, n) (X &= ~(1ULL < n))
+#define CLEAR_BIT(X, n)     (X &= ~(1ULL << (n)))
 
-#define GET_BIT(X, n) (X & (1ULL << n))
+#define GET_BIT(X, n)       (X & (1ULL << (n)))
 
 // Piece Number Macros
 
@@ -114,43 +121,43 @@
 // i.e. only use these macros in a context where it makes sense that you are looking at a game from one side's perspective
 #define SWITCH_MOVE gs->sideToMove = gs->sideToMove ^ 1
 
-#define ALLY_PAWNS (bPawns + (6 * gs->sideToMove))
-#define ENEMY_PAWNS (wPawns - (6 * gs->sideToMove))
+#define ALLY_PAWNS      (bPawns + (6 * gs->sideToMove))
+#define ENEMY_PAWNS     (wPawns - (6 * gs->sideToMove))
 
-#define ALLY_KNIGHTS (bKnights + (6 * gs->sideToMove))
-#define ENEMY_KNIGHTS (wKnights - (6 * gs->sideToMove))
+#define ALLY_KNIGHTS    (bKnights + (6 * gs->sideToMove))
+#define ENEMY_KNIGHTS   (wKnights - (6 * gs->sideToMove))
 
-#define ALLY_BISHOPS (bBishops + (6 * gs->sideToMove))
-#define ENEMY_BISHOPS wBishops - (6 * gs->sideToMove))
+#define ALLY_BISHOPS    (bBishops + (6 * gs->sideToMove))
+#define ENEMY_BISHOPS   (wBishops - (6 * gs->sideToMove))
 
-#define ALLY_ROOKS (bRooks + (6 * gs->sideToMove))
-#define ENEMY_ROOKS wRooks - (6 * gs->sideToMove))
+#define ALLY_ROOKS      (bRooks + (6 * gs->sideToMove))
+#define ENEMY_ROOKS     (wRooks - (6 * gs->sideToMove))
 
-#define ALLY_QUEENS (bQueens + (6 * gs->sideToMove))
-#define ENEMY_QUEENS (wQueens - (6 * gs->sideToMove))
+#define ALLY_QUEENS     (bQueens + (6 * gs->sideToMove))
+#define ENEMY_QUEENS    (wQueens - (6 * gs->sideToMove))
 
-#define ALLY_KINGS (bKings + (6 * gs->sideToMove))
-#define ENEMY_KINGS (wKings - (6 * gs->sideToMove))
+#define ALLY_KINGS      (bKings + (6 * gs->sideToMove))
+#define ENEMY_KINGS     (wKings - (6 * gs->sideToMove))
 
-#define ALLY_PIECES (gs->sideToMove)
-#define ENEMY_PIECES (!(gs->sideToMove))
+#define ALLY_PIECES     (gs->sideToMove)
+#define ENEMY_PIECES    (!(gs->sideToMove))
 
-#define PROMO_PIECE(X) promoPieceArray[ALLY_PIECES][(X & 0b11)]
+#define PROMO_PIECE(X) promoPieceArray[((X) & 0b11)][ALLY_PIECES]
 
 // Pawn moves
 
-#define PAWN_LEFT_MOVE (-9 + 16 * gs->sideToMove)
-#define PAWN_RIGHT_MOVE (-7 + 16 * gs->sideToMove)
-#define PAWN_FORWARD_MOVE (-8 + 16 * gs->sideToMove)
+#define PAWN_LEFT_MOVE      (-9 + 16 * gs->sideToMove)
+#define PAWN_RIGHT_MOVE     (-7 + 16 * gs->sideToMove)
+#define PAWN_FORWARD_MOVE   (-8 + (16 * gs->sideToMove))
 
 //TODO: Not sure if these are any good- might want to just use branching
 // Shifts pawn bitboards in the correct direction without branching e.g. PAWN_BITSHIFT_LEFT(X) does X << 7 if white to move and X >> 9 if black to move
-#define PAWN_BITSHIFT_LEFT(X) ((X << (7 * gs->sideToMove)) >> (9 * !gs->sideToMove))
-#define PAWN_BITSHIFT_RIGHT(X) ((X << (9 * gs->sideToMove)) >> (7 * !gs->sideToMove))
-#define PAWN_BITSHIFT_FORWARD(X) ((X << (8 * gs->sideToMove)) >> (8 * !gs->sideToMove))
-#define PAWN_BITSHIFT_DOUBLEFORWARD(X) ((X << (16 * gs->sideToMove)) >> (16 * !gs->sideToMove))
+#define PAWN_BITSHIFT_LEFT(X)           (((X) << (7 * gs->sideToMove)) >> (9 * !gs->sideToMove))
+#define PAWN_BITSHIFT_RIGHT(X)          (((X) << (9 * gs->sideToMove)) >> (7 * !gs->sideToMove))
+#define PAWN_BITSHIFT_FORWARD(X)        (((X) << (8 * gs->sideToMove)) >> (8 * !gs->sideToMove))
+#define PAWN_BITSHIFT_DOUBLEFORWARD(X)  (((X) << (16 * gs->sideToMove)) >> (16 * !gs->sideToMove))
 
-#define PROMO_RANK (rank1 ^ (gs->sideToMove * 0xFF0000000000FFULL))
+#define PROMO_RANK (rank1 ^ (gs->sideToMove * 0xFF000000000000FFULL))
 #define PAWN_STARTING_RANK (rank7 ^ (gs->sideToMove * 0x00FF00000000FF00ULL))
 
 
@@ -174,14 +181,16 @@ enum squares {a1, b1, c1, d1, e1, f1, g1, h1,
       a8, b8, c8, d8, e8, f8, g8, h8, no_sqr
 };
 
-//Pieces
-enum pieces {p=2, n, b, r, q, k, P, N, B, R, Q, K, no_pce};
 
 // Castling
 enum castling_markers {w_short_castle = 8, w_long_castle=4, b_short_castle=2, b_long_castle=1};
 
 // Bitboards
 enum bitboards {bPieces, wPieces, bPawns, bKnights, bBishops, bRooks, bQueens, bKings, wPawns, wKnights, wBishops, wRooks, wQueens, wKings, aPieces};
+
+//Pieces
+enum pieces {p=2, n, b, r, q, k, P, N, B, R, Q, K, no_pce=15};
+
 
 // Game History
 enum gameHist {ep_target, castling_rights, captured_piece, fifty_move_ply};
@@ -208,20 +217,21 @@ extern BitBoard kingMoves[64];
 
 extern uint64_t zobristTable[64][12];
 
-extern const char *chessPieces[13];
+extern const char *chessPieceNames[16];
 
 extern sMagic rookMagics[64];
 extern sMagic bishopMagics[64];
 extern BitBoard attacks[107648];
 
 // Pieces
-extern int oppositePieceArray[13];
+extern const int oppositePieceArray[14];
 // Promo Piece Array
-extern int promoPieceArray[4][2];
+extern const int promoPieceArray[4][2];
 
 
 
 /* ------------ DEFAULT METHODS --------*/
+Move encodeMove(Square originSquare, Square targetSquare, int moveCode);
 void printMoveInfo(Move move);
 const char* square_num_to_coords(char *str, int num);
 int square_coords_to_num(int rank, char file);

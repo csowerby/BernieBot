@@ -18,6 +18,7 @@
 uint64_t Perft(int depth, GameState *gs);
 uint64_t Perft_debug(int depth, GameState *gs);
 uint64_t Perft_speedtest(int depth, GameState *gs, uint64_t* moveGeneration, uint64_t* moveMaking, uint64_t* moveUnmaking, uint64_t* abortedMoves );
-void startPerft(int depth);
+void startPerft(int depth, char* fen);
+int checkIfGameStateConsistent(GameState *gs);
 
 #endif /* Perft_h */

@@ -22,32 +22,41 @@ BitBoard pawnCaptures[64][2] = {{0}};
 uint64_t zobristTable[64][12] = {{0}};
 
 // Piece Arrays for fast lookup
-extern int oppositePieceArray[13] = {1, 0, 8, 9, 10, 11, 12, 13, 2, 3, 4, 5, 6, 7}
-extern int promoPieceArray[4][2] = {{bKnights, wKnights}, {bBishops, wBishops}, {bRooks, wRooks}, {bQueens, wQueens}}
+const int oppositePieceArray[14] = {1, 0, 8, 9, 10, 11, 12, 13, 2, 3, 4, 5, 6, 7};
+const int promoPieceArray[4][2] = {{bKnights, wKnights}, {bBishops, wBishops}, {bRooks, wRooks}, {bQueens, wQueens}};
 
 // Magics
 sMagic rookMagics[64];
 sMagic bishopMagics[64];
 BitBoard attacks[ATTACK_LENGTH] = {0}; // 107684 Bitboards = ~800 kB of attacks
 
-const char *chessPieces[13] = {"\u2659","\u2658","\u2657","\u2656"," \u2655","\u2654","\u265F","\u265E","\u265D","\u265C","\u265B","\u265A", " "};
+const char *chessPieceNames[16] = {"Black Pieces", "White Pieces", "Black Pawns","Black Knights",
+                                    "Black Bishops","Black Rooks","Black Queens","Black Kings",
+                                    "White Pawns","White Knights","White Bishops","White Rooks"," White Queens",
+                                    "White Kings", "All Pieces", "no_pce"};
 
 
 /* --------- DEFAULT METHODS --------------- */
+
+
+Move encodeMove(Square originSquare, Square targetSquare, int moveCode){
+    return (originSquare << 10) | (targetSquare << 4) | moveCode;
+}
 
 void printMoveInfo(Move move){
     Square targetSquare = 63 & (move >> 4);
     Square originSquare = (move >> 10);
     char str[3];
-    printf("Move info: %i\n", move);
+    printf("Move info: %u\n", move);
     square_num_to_coords(str, originSquare);
     printf("Origin Square: %s\n", str);
     square_num_to_coords(str, targetSquare);
     printf("Target Square: %s\n", str);
-    printf("Special Flags (promo, cap, sp0, sp1): ");
+    printf("Special Flags: ");
     for (int i = 3; i>= 0; i--){
         printf("%i", getBit((BitBoard*)&move, i));
     }
+    printf("    (promo, cap, sp0, sp1)\n");
     printf("\n\n");
 }
 
@@ -76,51 +85,63 @@ char pieceNumToChar(int num){
      */
     char p = '\0';
     switch (num) {
-        case 0:
-            // White Pawn
+        case aPieces:
+            // All Pieces
+            p = 'a';
+            break;
+        case bPieces:
+            // White Knight
+            p = 'd';
+            break;
+        case wPieces:
+            // White Bishop
+            p = 'w';
+            break;
+        case wPawns:
+            // White Pawns
             p = 'P';
             break;
-        case 1:
-            // White Knight
+        case wKnights:
+            // White knights
             p = 'N';
             break;
-        case 2:
-            // White Bishop
+        case wBishops:
+            // White BISHOPS
             p = 'B';
             break;
-        case 3:
-            // White Rook
+        case wRooks:
+            // White Rooks
             p = 'R';
             break;
-        case 4:
+        case wQueens:
             // White Queen
             p = 'Q';
             break;
-        case 5:
+        case wKings:
             // White King
             p = 'K';
             break;
-        case 6:
+        case bPawns:
             // Black Pawn
             p = 'p';
             break;
-        case 7:
+        case bKnights:
             // Black Knight
             p = 'n';
             break;
-        case 8:
+        case bBishops:
             // Black Bishop
             p = 'b';
             break;
-        case 9:
+        case bRooks:
             // Black Rook
             p = 'r';
             break;
-        case 10:
+        case bQueens:
             // Black Queen
             p = 'q';
             break;
-        case 11:
+        case bKings:
             // Black King
             p = 'k';
             break;
@@ -136,40 +157,40 @@ int fenCharToNum(char fChar){
     /* Takes character in FEN string and converts to piece number */
     switch (fChar) {
         case 'P':
-            return 0;
+            return wPawns;
             break;
         case 'N':
-            return 1;
+            return wKnights;
             break;
         case 'B':
-            return 2;
+            return wBishops;
             break;
         case 'R':
-            return 3;
+            return wRooks;
             break;
         case 'Q':
-            return 4;
+            return wQueens;
             break;
         case 'K':
-            return 5;
+            return wKings;
             break;
         case 'p':
-            return 6;
+            return bPawns;
             break;
         case 'n':
-            return 7;
+            return bKnights;
             break;
         case 'b':
-            return 8;
+            return bBishops;
             break;
         case 'r':
-            return 9;
+            return bRooks;
             break;
         case 'q':
-            return 10;
+            return bQueens;
             break;
         case 'k':
-            return 11;
+            return bKings;
             break;
         default:
             assert(false);

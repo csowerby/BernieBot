@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include "defs.h"
 #include "gamestate.h"
+#include "movegen.h"
 
 
 // Search
@@ -28,9 +29,5 @@ int makeMove(GameState *gs, Move move);
 int unmakeMove(GameState *gs, Move move);
 int inCheck(Square kingPos, GameState* gs);
 
-//Move gen functions needed for search functions and inCheck
-int moveGen(Move move_list[MOVE_LIST_LENGTH], GameState *gs);
-inline BitBoard getBishopMoveBoard(Square origin_sq, GameState* gs);
-inline BitBoard getRookMoveBoard(Square origin_sq, GameState* gs);
 
 #endif /* engine_h */

@@ -24,9 +24,9 @@ typedef struct{
 
     BitBoard boards[NUM_BOARDS]; // wP, bP, wPce, bPce, aPce
 
-    /* - WE DON'T WANT THE PCE LIST SHIT - I'M JUST KEEPING IT HERE FOR */
-    Square pceList[12][10]; // Represents an array of the 10 possible pieces and it is possible to have 10 of each piece, fill with square numbers for each one, no_sqr
-    uint8_t numPieces[12];
+    // /* - WE DON'T WANT THE PCE LIST SHIT - I'M JUST KEEPING IT HERE FOR */
+    // Square pceList[12][10]; // Represents an array of the 10 possible pieces and it is possible to have 10 of each piece, fill with square numbers for each one, no_sqr
+    // uint8_t numPieces[12];
 
         // we have knights, bishops, rooks, queens, kings
 

@@ -19,9 +19,9 @@ int moveGen(Move move_list[MOVE_LIST_LENGTH], GameState *gs){
     Returns:
         int                 - number of moves in the position
     */
-
     int moveCount = 0;
-
+    //int ally_pieces = ALLY_PIECES;
+    //int enemy_pieces = ENEMY_PIECES;
     // CASTLING
     /* Procedure for checking if castling is legal
         - If you have castling rights
@@ -59,17 +59,15 @@ int moveGen(Move move_list[MOVE_LIST_LENGTH], GameState *gs){
                     // No Pieces in the way
                     if(!inCheck(d1, gs)){
                         if(!inCheck(c1, gs)){
-                            if(!inCheck(b1, gs)){
-                                // Squares between aren't in check
+                            // Squares between aren't in check
 
-                                // Long Castling is available - append now
-                                move_list[moveCount] = 0;
-                                move_list[moveCount] += c1 << 4;
-                                move_list[moveCount] += e1 << 10;
-                                //Code for long Castle 0011
-                                move_list[moveCount] += 3;
-                                moveCount++;
-                            }
+                            // Long Castling is available - append now
+                            move_list[moveCount] = 0;
+                            move_list[moveCount] += c1 << 4;
+                            move_list[moveCount] += e1 << 10;
+                            //Code for long Castle 0011
+                            move_list[moveCount] += 3;
+                            moveCount++;
                         }
                     }
                 }
@@ -79,7 +77,7 @@ int moveGen(Move move_list[MOVE_LIST_LENGTH], GameState *gs){
         // Black to Move
         if(!inCheck(e8, gs)){
             // Check if not in Check
-            if(GET_BIT(gs->castlingPrivileges, 0)){
+            if(GET_BIT(gs->castlingPrivileges, 1)){
                 // Check if Black Short Castling Privileges
                 if (!(b_short_castle_squares & gs->boards[aPieces])){
                     // No Pieces in the way
@@ -98,23 +96,22 @@ int moveGen(Move move_list[MOVE_LIST_LENGTH], GameState *gs){
                     }
                 }
             }
-            if(GET_BIT(gs->castlingPrivileges, 1)){
+            if(GET_BIT(gs->castlingPrivileges, 0)){
                 // Check if Black Long Castling Privileges
                 if (!(b_long_castle_squares & gs->boards[aPieces])){
                     // No Pieces in the way
                     if(!inCheck(d8, gs)){
                         if(!inCheck(c8, gs)){
-                            if(!inCheck(b8, gs)){
-                                // Squares between aren't in check
+                            // Squares between aren't in check
 
-                                // Long Castling is available - append now
-                                move_list[moveCount] = 0;
-                                move_list[moveCount] += c8 << 4;
-                                move_list[moveCount] += e8 << 10;
-                                //Code for long Castle 0011
-                                move_list[moveCount] += 3;
-                                moveCount++;
-                            }
+                            // Long Castling is available - append now
+                            move_list[moveCount] = 0;
+                            move_list[moveCount] += c8 << 4;
+                            move_list[moveCount] += e8 << 10;
+                            //Code for long Castle 0011
+                            move_list[moveCount] += 3;
+                            moveCount++;
+
                         }
                     }
                 }
@@ -129,8 +126,9 @@ int moveGen(Move move_list[MOVE_LIST_LENGTH], GameState *gs){
 
     //King Moves
     Square kingSquare = GET_LS1B(gs->boards[ALLY_KINGS]);
-    BitBoard kMoves = kingMoves[GET_LS1B(gs->boards[ALLY_KINGS])];
+    BitBoard kMoves = kingMoves[kingSquare];
     BitBoard kAttacks = kMoves & gs->boards[ENEMY_PIECES];
+    kMoves &= ~gs->boards[aPieces];
     moveCount = encodeMoves(move_list, moveCount, CAPTURE_MC, kAttacks, kingSquare);
     moveCount = encodeMoves(move_list, moveCount, QUIET_MOVE_MC, kMoves, kingSquare);
 
@@ -156,8 +154,8 @@ int moveGen(Move move_list[MOVE_LIST_LENGTH], GameState *gs){
     BitBoard bishopAndQueenPositions = gs->boards[ALLY_QUEENS] | gs->boards[ALLY_BISHOPS];
     while(bishopAndQueenPositions){
         // Get Origin Square
-        Square originSquare = GET_LS1B(rookAndQueenPositions);
-        CLEAR_LS1B(rookAndQueenPositions);
+        Square originSquare = GET_LS1B(bishopAndQueenPositions);
+        CLEAR_LS1B(bishopAndQueenPositions);
 
         // Get Target Board and spearate into
         BitBoard bMoves = getBishopMoveBoard(originSquare, gs);
@@ -173,8 +171,8 @@ int moveGen(Move move_list[MOVE_LIST_LENGTH], GameState *gs){
     BitBoard knightPositions = gs->boards[ALLY_KNIGHTS];
     while(knightPositions){
         // Get Origin Square
-        Square originSquare = GET_LS1B(rookAndQueenPositions);
-        CLEAR_LS1B(rookAndQueenPositions);
+        Square originSquare = GET_LS1B(knightPositions);
+        CLEAR_LS1B(knightPositions);
 
         // Get Target Board and spearate into attacks and quiet moves
         BitBoard nMoves = knightMoves[originSquare];
@@ -189,53 +187,21 @@ int moveGen(Move move_list[MOVE_LIST_LENGTH], GameState *gs){
     return moveCount;
 }
 
-inline int encodeMoves(Move move_list[MOVE_LIST_LENGTH], int moveCount, int moveType, BitBoard moves, Square origin_sq){
-    for(int i = 0; i < NUMBITS(moves);i++){
+static inline int encodeMoves(Move move_list[MOVE_LIST_LENGTH], int moveCount, int moveType, BitBoard moves, Square origin_sq){
+    int numBits = NUMBITS(moves);
+    for(int i = 0; i < numBits ;i++){
         // Append move to list
         Square targetSquare = GET_LS1B(moves);
         CLEAR_LS1B(moves);
-        move_list[moveCount] += (targetSquare << 4) | (origin_sq << 10) | moveType;
+        move_list[moveCount] = (targetSquare << 4) | (origin_sq << 10) | moveType;
         moveCount++;
     }
     return moveCount;
 }
 
-inline BitBoard getBishopMoveBoard(Square origin_sq, GameState* gs){
-    /*
-    Purpose:
-        Get a bitboard with all possible bishop moves for a given square using magic bitboards (including captures of all enemy/friendly pieces)
-    Params:
-        Square origin_sq    - common origin square of bishop move board
-        GameState* gs       - pointer to current gamestate
-    Returns:
-        BitBoard            - board of bishop moves
-    */
-    BitBoard occ = gs->boards[aPieces];
-    occ &= bishopMagics[origin_sq].mask;
-    occ *= bishopMagics[origin_sq].magic;
-    occ >>= bishopMagics[origin_sq].shift;
-    return bishopMagics[origin_sq].attackPtr[occ];
-}
-
-inline BitBoard getRookMoveBoard(Square origin_sq, GameState* gs){
-    /*
-    Purpose:
-        Get a bitboard with all possible rook moves for a given square using magic bitboards (including captures of all enemy/friendly pieces)
-    Params:
-        Square origin_sq    - common origin square of rook move board
-        GameState* gs       - pointer to current gamestate
-    Returns:
-        BitBoard            - board of rook moves
-    */
-    BitBoard occ = gs->boards[aPieces];
-    occ &= rookMagics[origin_sq].mask;
-    occ *= rookMagics[origin_sq].magic;
-    occ >>= rookMagics[origin_sq].shift;
-    return rookMagics[origin_sq].attackPtr[occ];
-}
 
 
-inline int calcPawnMoves(Move move_list[MOVE_LIST_LENGTH], int moveCount, GameState *gs){
+static inline int calcPawnMoves(Move move_list[MOVE_LIST_LENGTH], int moveCount, GameState *gs){
     /*
     Params:
         Move move_list[]    - list of all moves generated in this position
@@ -245,15 +211,18 @@ inline int calcPawnMoves(Move move_list[MOVE_LIST_LENGTH], int moveCount, GameSt
         int moveCount       - Updated moveCount
     */
 
-    BitBoard pawns = gs->boards[wPawns];
-    BitBoard rightPawnAttackPromos = PAWN_BITSHIFT_RIGHT(pawns & notHFile) & ENEMY_PIECES & PROMO_RANK;
-    BitBoard leftPawnAttackPromos = PAWN_BITSHIFT_LEFT(pawns & notAFile) & ENEMY_PIECES & PROMO_RANK;
-    BitBoard leftPawnAttacks = PAWN_BITSHIFT_LEFT(pawns & notAFile) & ENEMY_PIECES;
-    BitBoard rightPawnAttacks = PAWN_BITSHIFT_RIGHT(pawns & notHFile) & ENEMY_PIECES;
-    BitBoard pawnMovePromo = PAWN_BITSHIFT_FORWARD(pawns & notHFile) & PROMO_RANK;
-    BitBoard pawnQuietMove = PAWN_BITSHIFT_FORWARD(pawns) & ~gs->boards[aPieces];
+    BitBoard pawns = gs->boards[ALLY_PAWNS];
+    BitBoard rightPawnAttackPromos = PAWN_BITSHIFT_RIGHT(pawns & notHFile) & gs->boards[ENEMY_PIECES] & PROMO_RANK;
+    BitBoard leftPawnAttackPromos = PAWN_BITSHIFT_LEFT(pawns & notAFile) & gs->boards[ENEMY_PIECES] & PROMO_RANK;
+    BitBoard leftPawnAttacks = PAWN_BITSHIFT_LEFT(pawns & notAFile) & gs->boards[ENEMY_PIECES] & ~(PROMO_RANK);
+    BitBoard rightPawnAttacks = PAWN_BITSHIFT_RIGHT(pawns & notHFile) & gs->boards[ENEMY_PIECES] & ~(PROMO_RANK);
+    BitBoard pawnMovePromo = PAWN_BITSHIFT_FORWARD(pawns & notHFile) & PROMO_RANK & ~(gs->boards[aPieces]);
+    BitBoard pawnQuietMove = PAWN_BITSHIFT_FORWARD(pawns) & ~gs->boards[aPieces] & ~(PROMO_RANK);
     BitBoard pawnDoubleMoveTargets = PAWN_BITSHIFT_DOUBLEFORWARD(pawns & PAWN_STARTING_RANK) & ~gs->boards[aPieces] & PAWN_BITSHIFT_FORWARD(~gs->boards[aPieces]);
 
+    //BitBoard test = PROMO_RANK;
+
+    int numBits;
     // EN PASSANT!
     if (gs->enPassantTarget != no_sqr){
         BitBoard leftEP = PAWN_BITSHIFT_LEFT(pawns & notAFile);
@@ -274,11 +243,12 @@ inline int calcPawnMoves(Move move_list[MOVE_LIST_LENGTH], int moveCount, GameSt
     // Pop from move boards and append.
 
     // PAWN ATTACK PROMOTIONS
-    for(int i = 0; i < NUMBITS(leftPawnAttackPromos); i++){
+    numBits = NUMBITS(leftPawnAttackPromos);
+    for(int i = 0; i < numBits; i++){
         Square targetSquare = GET_LS1B(leftPawnAttackPromos);
         CLEAR_LS1B(leftPawnAttackPromos);
         for(int i = 0; i < 4; i++){
-            move_list[moveCount] = (targetSquare << 4) | ((targetSquare - PAWN_LEFT_MOVE) << 10);
+            move_list[moveCount + i] = (targetSquare << 4) | ((targetSquare - PAWN_LEFT_MOVE) << 10);
         }
         // Add move codes for promo capture
         move_list[moveCount] |= QUEEN_PROMO_CAP_MC;
@@ -288,11 +258,12 @@ inline int calcPawnMoves(Move move_list[MOVE_LIST_LENGTH], int moveCount, GameSt
         moveCount += 4;
     }
 
-    for(int i = 0; i < NUMBITS(rightPawnAttackPromos); i++){
+    numBits = NUMBITS(rightPawnAttackPromos);
+    for(int i = 0; i < numBits; i++){
         Square targetSquare = GET_LS1B(rightPawnAttackPromos);
         CLEAR_LS1B(rightPawnAttackPromos);
         for(int i = 0; i < 4; i++){
-            move_list[moveCount] = (targetSquare << 4) | ((targetSquare - PAWN_RIGHT_MOVE) << 10);
+            move_list[moveCount + i] = (targetSquare << 4) | ((targetSquare - PAWN_RIGHT_MOVE) << 10);
         }
         // Add move codes for promo capture
         move_list[moveCount] |= QUEEN_PROMO_CAP_MC;
@@ -303,11 +274,12 @@ inline int calcPawnMoves(Move move_list[MOVE_LIST_LENGTH], int moveCount, GameSt
     }
 
     // QUIET MOVE PROMOTIONS
-    for(int i = 0; i < NUMBITS(pawnMovePromo); i++){
+    numBits = NUMBITS(pawnMovePromo);
+    for(int i = 0; i < numBits; i++){
         Square targetSquare = GET_LS1B(pawnMovePromo);
         CLEAR_LS1B(pawnMovePromo);
         for(int i = 0; i < 4; i++){
-            move_list[moveCount] = (targetSquare << 4) | ((targetSquare - PAWN_FORWARD_MOVE) << 10);
+            move_list[moveCount + i] = (targetSquare << 4) | ((targetSquare - PAWN_FORWARD_MOVE) << 10);
         }
         // add move code for promo
         move_list[moveCount] |= QUEEN_PROMO_MC;
@@ -320,7 +292,8 @@ inline int calcPawnMoves(Move move_list[MOVE_LIST_LENGTH], int moveCount, GameSt
 
 
     // REGULAR PAWN ATTACKS
-    for(int i = 0; i < NUMBITS(leftPawnAttacks); i++){
+    numBits = NUMBITS(leftPawnAttacks);
+    for(int i = 0; i < numBits; i++){
         Square targetSquare = GET_LS1B(leftPawnAttacks);
         CLEAR_LS1B(leftPawnAttacks);
         move_list[moveCount] = (targetSquare << 4) | ((targetSquare - PAWN_LEFT_MOVE) << 10);
@@ -328,7 +301,8 @@ inline int calcPawnMoves(Move move_list[MOVE_LIST_LENGTH], int moveCount, GameSt
         move_list[moveCount] |= CAPTURE_MC;
         moveCount++;
     }
-    for(int i = 0; i < NUMBITS(rightPawnAttacks); i++){
+    numBits = NUMBITS(rightPawnAttacks);
+    for(int i = 0; i < numBits; i++){
         Square targetSquare = GET_LS1B(rightPawnAttacks);
         CLEAR_LS1B(rightPawnAttacks);
         move_list[moveCount] = (targetSquare << 4) | ((targetSquare - PAWN_RIGHT_MOVE) << 10);
@@ -338,7 +312,8 @@ inline int calcPawnMoves(Move move_list[MOVE_LIST_LENGTH], int moveCount, GameSt
     }
 
     // DOUBLE PAWN MOVES
-    for(int i = 0; i < NUMBITS(pawnDoubleMoveTargets); i++){
+    numBits = NUMBITS(pawnDoubleMoveTargets);
+    for(int i = 0; i < numBits; i++){
         Square targetSquare = GET_LS1B(pawnDoubleMoveTargets);
         CLEAR_LS1B(pawnDoubleMoveTargets);
         move_list[moveCount] += targetSquare << 4;
@@ -349,11 +324,11 @@ inline int calcPawnMoves(Move move_list[MOVE_LIST_LENGTH], int moveCount, GameSt
     }
 
     // SINGLE QUIET PAWN MOVES
-    for(int i = 0; i < NUMBITS(pawnQuietMove); i++){
+    numBits = NUMBITS(pawnQuietMove);
+    for(int i = 0; i < numBits; i++){
         Square targetSquare = GET_LS1B(pawnQuietMove);
-        CLEAR_LS1B(pawnDoubleMoveTargets);
+        CLEAR_LS1B(pawnQuietMove);
         move_list[moveCount] = (targetSquare << 4) | ((targetSquare - PAWN_FORWARD_MOVE) << 10);
-        move_list[moveCount] += (targetSquare - 8) << 10;
         move_list[moveCount] |= QUIET_PAWN_PUSH_MC;
         moveCount++;
     }

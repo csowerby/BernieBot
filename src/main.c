@@ -16,11 +16,11 @@
 
 /*
 
- Plans:
+ NOTES TO SELF:
 
 
 
- Next:
+ Next steps:
 
 
  * add funcationality for 50 move draw
@@ -30,18 +30,15 @@
 
  * implement ab pruning
  * Implement different moveGen that separates quiet moves and attacks?
-
- * Conider writing pop_ls1b funcntion using better bit-twiddling to reset bit (might save an instruction)
+    *i.e. move ordering
 
   * Zobrist hashing not super important -> implement for transposition table.
   * Move history? Is this necessary?
 
 
- * for performance - switch any function passing less than 8 bytes to passing the actual object rather than a pointer
-
  * Consider in the future using a bitboard for attacked squares - legal move generation instead of PL
 
- * better to just be passed a bitboard with target Square and origin Squre & 4 digit code?
+ * better to just be passed a bitboard with target Squares and origin Square & 4 digit code?
 
  * PRETTY SURE IT IS FASTER TO DO PIECE CENTRIC MOVE GENERATION BECAUSE OF SUPER FAST BITBOARD OPERATIONS i.e. encode moves with originPiece, targetSquare? also to move gen function pass just bitboards of each knight/king/sliding/diag piece moves, then use bitwise ops to isolate ls1b bitboard, and apply xor to the bitboards, might not even need
  */
@@ -50,28 +47,25 @@
 
 /* DEBUGGING FEN LIST:
 
- *starting position fen
- "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    * kiwipete
+    "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - "
 
- * Wack position
- "r1bq1bnr/p1p2ppp/3pk3/4p3/2Q1P3/5N2/PPPP1PPP/RNB2RK1 b - - 0 9"
+    *starting position fen
+    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
- * BISHOP anti-diagonal:
- "b7/1b6/2b5/3b4/4b3/5b2/6b1/7b w - - 0 1"
+    * Wack position
+    "r1bq1bnr/p1p2ppp/3pk3/4p3/2Q1P3/5N2/PPPP1PPP/RNB2RK1 b - - 0 9"
 
- * black Pieces on diagonals:
- "3n3b/2n3b1/1n3b2/n3b3/3b3q/2b3q1/1b3q2/b3q3 w - - 0 1"
+    * BISHOP anti-diagonal:
+    "b7/1b6/2b5/3b4/4b3/5b2/6b1/7b w - - 0 1"
 
- * Square of various pieces:
- 8/2RRRRR1/2P3P1/2P3P1/2bbbbb1/8/8/8 w - - 0 1
+    * black Pieces on diagonals:
+    "3n3b/2n3b1/1n3b2/n3b3/3b3q/2b3q1/1b3q2/b3q3 w - - 0 1"
 
- */
+    * Square of various pieces:
+    8/2RRRRR1/2P3P1/2P3P1/2bbbbb1/8/8/8 w - - 0 1
 
-/* IN LLDB DEBUGGER
- type format add -f binary Move
- type format add -f bytes BitBoard
- type format add -f decimal Square
- */
+    */
 
 
 
@@ -86,35 +80,56 @@
 int main(void) {
     printf("\n------------------ BernieBot ------------------\n\n");
 
-
-    printf("%lu", 0b0001000 << -1);
-
-
-    //startPerft(5);
-
-    /*
     init();
-
-
-    GameState gs;
-
-    init_GameState(&gs, "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
-
-
-    clock_t executionStart = clock();
-    //search(3, &gs);
+    startPerft(8, "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10");
 
 
 
+    // init();
+    //
+    //
+    // GameState gs;
+    //
+    // init_GameState(&gs, "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R4RK1 b kq - 1 1");
+    // int test = checkIfGameStateConsistent(&gs);
+    // printGameStateInfo(&gs, true);
+    //
+    // Move rookMove = 65488;
+    // makeMove(&gs, rookMove);
+    // printMoveInfo(rookMove);
+    //
+    //
+    // printGameStateInfo(&gs, true);
+    // Move move_list[MOVE_LIST_LENGTH];
+    // int nMoves = moveGen(move_list, &gs);
+    // for(int i = 0; i < nMoves; i++){
+    //     printMoveInfo(move_list[i]);
+    // }
 
-    clock_t executionEnd = clock();
-    double elapsedTime = (double) (executionEnd - executionStart)/ CLOCKS_PER_SEC;
-    printf("Execution finished in %f seconds.\n", elapsedTime);
 
 
 
-     */
+    // GameState gs;
+    //
+    // init_GameState(&gs, "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1");
+    // clock_t executionStart = clock();
+    //
+    // uint64_t total_nodes = Perft_debug(8, &gs);
+    // printf("Total Nodes: %llu", total_nodes);
+    //
+    //
+    // clock_t executionEnd = clock();
+    // double elapsedTime = (double) (executionEnd - executionStart)/ CLOCKS_PER_SEC;
+
+    //printf("Execution finished in %f seconds.\n", elapsedTime);
+
+
+
+
 
     printf("\n---------------- End BernieBot ----------------\n\n");
+
+
+
     return 0;
 }

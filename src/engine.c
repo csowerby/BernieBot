@@ -65,7 +65,6 @@ int negaMax(int depth, GameState *gs){
 
         unmakeMove(gs, move_list[i]);
     }
-    free(move_list);
     return maxScore;
 }
 
@@ -121,7 +120,7 @@ int makeMove(GameState *gs, Move move){
     Square targetSquare = 0b111111 & move >> 4;
     Square originSquare = move >>10;
 
-    uint8_t moveCode = move & 15;
+    uint8_t moveCode = move & 0b1111;
 
     // Add info to Hist
     gs->gameHist[gs->histIndex][castling_rights] = gs->castlingPrivileges;
@@ -163,8 +162,10 @@ int makeMove(GameState *gs, Move move){
                     break;
                 case a8:
                     CLEAR_BIT(gs->castlingPrivileges, 0); // black long castle
+                    break;
                 case h1:
                     CLEAR_BIT(gs->castlingPrivileges, 3); // white short castle
+                    break;
                 case h8:
                     CLEAR_BIT(gs->castlingPrivileges, 1); // black short castle
                     break;
@@ -331,6 +332,7 @@ int makeMove(GameState *gs, Move move){
             SWITCH_BIT(gs->boards[aPieces], enPassantSquare);
             gs->squareOccupancy[enPassantSquare] = no_pce;
 
+            gs->enPassantTarget = no_sqr;
             gs->fiftyMovePly = 0;
             break;
         case 4: // Regular Capture
@@ -354,7 +356,7 @@ int makeMove(GameState *gs, Move move){
             SWITCH_BIT(gs->boards[ALLY_PIECES], targetSquare);
             SWITCH_BIT(gs->boards[aPieces], targetSquare);
             gs->squareOccupancy[targetSquare] = originPiece;
-
+            gs->enPassantTarget = no_sqr;
             gs->fiftyMovePly = 0;
 
             switch (targetSquare) {
@@ -363,8 +365,10 @@ int makeMove(GameState *gs, Move move){
                     break;
                 case a8:
                     CLEAR_BIT(gs->castlingPrivileges, 0); // black long castle
+                    break;
                 case h1:
                     CLEAR_BIT(gs->castlingPrivileges, 3); // white short castle
+                    break;
                 case h8:
                     CLEAR_BIT(gs->castlingPrivileges, 1); // black short castle
                     break;
@@ -376,8 +380,7 @@ int makeMove(GameState *gs, Move move){
     // Update Game Ply
     gs->plyNum++;
 
-    // Update Castling Priviledges\
-    //TODO: if a rook is captured also update castling privilegs
+    // Update Castling Priviledges
     switch (originSquare) {
         case e1:
             CLEAR_BIT(gs->castlingPrivileges, 2); // white long castle
@@ -394,14 +397,19 @@ int makeMove(GameState *gs, Move move){
             break;
         case h8:
             CLEAR_BIT(gs->castlingPrivileges, 1); // black short castle
+            break;
         case e8:
-            CLEAR_BIT(gs->castlingPrivileges, 0); // white long castle
-            CLEAR_BIT(gs->castlingPrivileges, 1); // white short castle
+            CLEAR_BIT(gs->castlingPrivileges, 0); // b long castle
+            CLEAR_BIT(gs->castlingPrivileges, 1); // b short castle
             break;
 
         default:
             break;
     }
+
+    // assert(gs->boards[wKings]);
+    // assert(gs->boards[bKings]);
+
     gs->histIndex++;
     // Check if position Legal
     Square kingPos = GET_LS1B(gs->boards[ALLY_KINGS]);
@@ -632,6 +640,7 @@ int unmakeMove(GameState *gs, Move move){
                SWITCH_BIT(gs->boards[ENEMY_PIECES], targetSquare);
                SWITCH_BIT(gs->boards[aPieces], targetSquare);
                gs->squareOccupancy[targetSquare] = targetPiece;
+
            }
 
     // Update Game Ply
@@ -647,7 +656,7 @@ int inCheck(Square kingPos, GameState* gs){
         Square kingPos      - square of king whose side is being evaluated (passed as argument since sometimes it is desired to check if a different square is in check)
         GameState* gs       - pointer to current gamestate
     Returns:
-        into                - -1 if in check; 0 otherwise
+        int                - -1 if in check; 0 otherwise
     */
 
 
@@ -655,7 +664,9 @@ int inCheck(Square kingPos, GameState* gs){
         // White To Move
 
         // Rooks and Queens
-        if(getRookMoveBoard(kingPos, gs) & (gs->boards[bRooks] | gs->boards[bQueens])){
+        //TODO: Fix this
+        BitBoard rookMoves = getRookMoveBoard(kingPos, gs);
+        if(rookMoves & (gs->boards[bRooks] | gs->boards[bQueens])){
             return -1;
         }
 
@@ -670,10 +681,14 @@ int inCheck(Square kingPos, GameState* gs){
         }
 
         //Pawns
-        if( kingPos % 8 != 0 && (getBit(&gs->boards[bPawns], kingPos + 7))){
+        if( ((kingPos % 8) != 0) && (getBit(&gs->boards[bPawns], kingPos + 7))){
             return -1;
         }
-        if( kingPos % 8 != 7 && (getBit(&gs->boards[bPawns], kingPos + 9))){
+        if( ((kingPos % 8) != 7) && (getBit(&gs->boards[bPawns], kingPos + 9))){
+            return -1;
+        }
+        // Other King
+        if(kingMoves[kingPos] & gs->boards[bKings]){
             return -1;
         }
         // Not in Check
@@ -696,10 +711,14 @@ int inCheck(Square kingPos, GameState* gs){
         }
 
         //Pawns
-        if( (kingPos % 8) != 0 && (getBit(&gs->boards[wPawns], kingPos - 9))){
+        if( ((kingPos % 8) != 0) && (getBit(&gs->boards[wPawns], kingPos - 9))){
             return -1;
         }
-        if( (kingPos % 8) != 7 && (getBit(&gs->boards[wPawns], kingPos - 7))){
+        if( ((kingPos % 8) != 7) && (getBit(&gs->boards[wPawns], kingPos - 7))){
+            return -1;
+        }
+        // Other King
+        if(kingMoves[kingPos] & gs->boards[wKings]){
             return -1;
         }
         return 0;
